@@ -1,0 +1,27 @@
+\begin{table}[H]
+\begin{center}
+\large{\texttt{main.py}}\normalsize{ }\\\vspace{0.2cm}
+\begin{tabular}{!\vrule p{4.5cm}!\vrule p{4.5cm}!\vrule p{4.5cm}!\vrule}
+\hline
+\texttt{Geometry = "ConeBrassExp.geo"} & \texttt{alpha = 0.001} & \texttt{MeshSize = 1}\\\hline
+\texttt{Order = 4} & \texttt{Start = 1} & \texttt{Finish = 8}\\\hline
+\texttt{Points = 71} & \texttt{Single = False} &\texttt{Omega = 100000}\\\hline
+\end{tabular}\\
+\begin{tabular}{!\vrule p{4.5cm}!\vrule p{4.5cm}!\vrule}
+\texttt{Pod = True} & \texttt{MultiProcessing = True}\\\hline
+\end{tabular}
+\\\vspace{0.5cm}\large{\texttt{Settings.py}}\normalsize{ }\\\vspace{0.2cm}
+\begin{tabular}{!\vrule p{4.5cm}!\vrule p{4.5cm}!\vrule p{4.5cm}!\vrule}
+\hline
+\texttt{CPUs = 8} & \texttt{BigProblem = True} & \texttt{PODPoints = 13}\\\hline
+\texttt{PODTol = 1e-08} & \texttt{OldMesh = True} & \texttt{PlotPod = True}\\\hline
+\texttt{PODErrorBars = False} & \texttt{EddyCurrentTest = False} & \texttt{vtk\_output = False}\\\hline
+\texttt{Refine\_vtk = False} & \texttt{FolderName = "Default"} & \texttt{Solver = "bddc"}\\\hline
+\texttt{epsi = 1e-09} & \texttt{Maxsteps = 5000} & \texttt{Tolerance = 1e-08}\\\hline
+\end{tabular}\\
+\begin{tabular}{!\vrule p{4.5cm}!\vrule}
+\texttt{ngsglobals.msg\_level = 3}\\\hline
+\end{tabular}
+\caption{Add a caption.}\label{Add a label}
+\end{center}
+\end{table}
