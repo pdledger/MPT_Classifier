@@ -37,6 +37,8 @@ from scipy.stats import sem, t
 import pandas as pd
 import seaborn as sns
 import time
+# TensorFlow and tf.keras
+import tensorflow as tf
 
 sys.path.insert(0,"Functions")
 from Noise_adder import *
@@ -53,7 +55,10 @@ def main(SNR_array=[]):
     #User Inputs
 
     #DataSet_Name = 'UK_Coin_Experimental_noisytestdata_magnetic_coins/UK_Coin_Al_0.84_Sig_2.4'
-    DataSet_Name = 'PLTest/Test15febmgcoins_Al_0.84_Sig_2.4'
+    #DataSet_Name = 'PLTest/Test15febmgcoins_Al_0.84_Sig_2.4'
+    DataSet_Name = 'British_Coins/Coins_100_Al_0.84_Sig_2.4'
+
+
 
     # Option to load external testing data from disk. Requires that external_file_loader.py be run first.
     Load_External_Data = False #True
@@ -68,7 +73,7 @@ def main(SNR_array=[]):
     #Optional models 'LogisticRegression', 'SVM', 'DecisionTree', 'RandomForest', 'GradientBoost', 'MLP','MLP,(n1,n2,...,nn)'
 
     # Models_to_run = ['LogisticRegression','SVM', 'DecisionTree', 'RandomForest', 'GradientBoost', 'MLP']
-    Models_to_run = ['LogisticRegression', 'MLP', 'GradientBoost']
+    Models_to_run = ['TensorflowNN']#'LogisticRegression', 'MLP', 'GradientBoost']
     #Model = 'GradientBoost'
     #(string) 'LogisticRegression', 'SVM', 'SVM-RBF', 'DecisionTree', 'RandomForest',
     #'AdaBoost', 'GradientBoost', 'MLP' model to use when training the data
@@ -135,7 +140,7 @@ def main(SNR_array=[]):
     PYCOL=['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
 
     #Define the Probabalistic classifiers
-    Pobabalistic_Classifiers = ['LogisticRegression','RandomForest','AdaBoost','GradientBoost','MLP']
+    Pobabalistic_Classifiers = ['LogisticRegression','RandomForest','AdaBoost','GradientBoost','MLP','TensorflowNN']
 
 
 
@@ -427,6 +432,20 @@ def main(SNR_array=[]):
                     else:
                         Layers = Model.replace('MLP,','')
                         exec('model = MLPClassifier(hidden_layer_sizes='+Layers+',random_state=1, max_iter=1000).fit(X_train_norm, Y_train)')
+
+                if Model == 'TensorflowNN':
+                    # Setup a simple tensor flow model. Just one hidden layer with 128 neurons
+                    model = tf.keras.Sequential([
+                        tf.keras.layers.Dense(128, activation='relu'),
+                        tf.keras.layers.Dense(Number_Of_Classes)
+                    ])
+                    model.compile(optimizer='adam',
+                        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics=['accuracy'])
+                    model.fit(X_train_norm, Y_train, epochs=10)
+                    test_loss, test_acc = model.evaluate(X_test_norm,  Y_test, verbose=2)
+                    probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
+                
+
                 # save the model to disk
                 if Full_Save is True:
                     try:
@@ -438,33 +457,68 @@ def main(SNR_array=[]):
                         pass
 
                 #Obtain results
-                Results[k] = model.score(X_test_norm, Y_test)
-                if Load_External_Data is False:
-                    Con_mat_store[:,:,k] = confusion_matrix(Y_test,model.predict(X_test_norm))
+                if Model != 'TensorflowNN':   
+                    Results[k] = model.score(X_test_norm, Y_test)
+                    if Load_External_Data is False:
+                        Con_mat_store[:,:,k] = confusion_matrix(Y_test,model.predict(X_test_norm))
 
-                Predictions.append(model.predict(X_test_norm))
-                Actual.append(Y_test)
-                if k==0:
-                    # Predictions are stacked vertically with the results of subsequent bootstrap iteraions under each other
-                    PredictionsPL = model.predict(X_test_norm)
-                    # True classes are appended horizontally with those of subsquent bootstrap iterations placed after each other
-                    ActualPL = Y_test
-                else:
-                    PredictionsPL = np.vstack((PredictionsPL,model.predict(X_test_norm)))
-                    ActualPL = np.append(ActualPL, Y_test)
-
-                # Also compute uq based nstand standard deviations
-                nstand =  2
-                if (Model in Pobabalistic_Classifiers) or ('MLP' in Model):
-                    Probabilities.append(model.predict_proba(X_test_norm))
-                    if k == 0:
-                        ProbabilitiesPL = model.predict_proba(X_test_norm)
+                    Predictions.append(model.predict(X_test_norm))
+                    Actual.append(Y_test)
+                    if k==0:
+                        # Predictions are stacked vertically with the results of subsequent bootstrap iteraions under each other
+                        PredictionsPL = model.predict(X_test_norm)
+                        # True classes are appended horizontally with those of subsquent bootstrap iterations placed after each other
+                        ActualPL = Y_test
                     else:
-                        ProbabilitiesPL = np.vstack((ProbabilitiesPL,model.predict_proba(X_test_norm)))
-                    #print(Probabilities)
-                    #print(len(Probabilities))
-                    #print(np.shape(model.predict_proba(X_test_norm)))
-                    pout = model.predict_proba(X_test_norm)
+                        PredictionsPL = np.vstack((PredictionsPL,model.predict(X_test_norm)))
+                        ActualPL = np.append(ActualPL, Y_test)
+
+                    if (Model in Pobabalistic_Classifiers) or ('MLP' in Model):
+                        Probabilities.append(model.predict_proba(X_test_norm))
+                        if k == 0:
+                            ProbabilitiesPL = model.predict_proba(X_test_norm)
+                        else:
+                            ProbabilitiesPL = np.vstack((ProbabilitiesPL,model.predict_proba(X_test_norm)))
+
+                else:
+                    Results[k] = test_acc
+                    probs =  probability_model.predict(X_test_norm)
+                    Probabilities.append(probs)
+                    # obtain predictions
+                    dum = np.shape(X_test)
+                    predictions=[]
+                    for n in range(dum[0]):
+                        case = probs[n]
+                        case_class = np.argmax(case)
+                        predictions.append(case_class)
+                    Actual.append(Y_test)
+                    print(predictions)
+                    Predictions.append(predictions)
+                    if k==0:
+                        # Predictions are stacked vertically with the results of subsequent bootstrap iteraions under each other
+                        PredictionsPL =predictions
+                        # True classes are appended horizontally with those of subsquent bootstrap iterations placed after each other
+                        ActualPL = Y_test
+                    else:
+                        PredictionsPL = np.vstack((PredictionsPL,predictions))
+                        ActualPL = np.append(ActualPL, Y_test)
+                    if k == 0:
+                        ProbabilitiesPL = probs
+                    else:
+                        ProbabilitiesPL = np.vstack((ProbabilitiesPL,probs))
+                if (Model in Pobabalistic_Classifiers) or ('MLP' in Model):
+
+                    # Also compute uq based nstand standard deviations
+                    nstand =  2
+
+
+                        #print(Probabilities)
+                        #print(len(Probabilities))
+                        #print(np.shape(model.predict_proba(X_test_norm)))
+                    if Model != 'TensorflowNN':
+                        pout = model.predict_proba(X_test_norm)
+                    else:
+                        pout =probability_model.predict(X_test_norm)
                     row,col = np.shape(pout)
                     uq = np.zeros(row)
                     plow = np.zeros((row,Number_Of_Classes))
@@ -489,10 +543,10 @@ def main(SNR_array=[]):
                         for j in range(Number_Of_Classes):
                             pup[i,j] = pout[i,j] + uq[i]
                             plow[i,j] = pout[i,j] - uq[i]
-                        #print(pup[i,:],plow[i,:])
-                        #print(uq[i])
-                        #time.sleep(10)
-                    #time.sleep(100)
+                            #print(pup[i,:],plow[i,:])
+                            #print(uq[i])
+                            #time.sleep(10)
+                            #time.sleep(100)
                     if k ==0:
                         ProbabilitiesUpPL = pup
                         ProbabilitiesLowPL = plow
@@ -502,8 +556,8 @@ def main(SNR_array=[]):
                         ProbabilitiesLowPL = np.vstack((ProbabilitiesLowPL,plow))
                         UQPL = np.append(UQPL,uq)
 
-            #print('uqs',min(UQPL),max(UQPL),np.amax(ProbabilitiesUpPL),np.amin(ProbabilitiesLowPL))
-            #time.sleep(10)
+                #print('uqs',min(UQPL),max(UQPL),np.amax(ProbabilitiesUpPL),np.amin(ProbabilitiesLowPL))
+                #time.sleep(10)
 
 
             if Load_External_Data is True:
