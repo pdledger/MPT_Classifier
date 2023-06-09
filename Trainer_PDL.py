@@ -77,7 +77,7 @@ def main(SNR_array=[]):
     #Optional models 'LogisticRegression', 'SVM', 'DecisionTree', 'RandomForest', 'GradientBoost', 'MLP','MLP,(n1,n2,...,nn)'
 
     # Models_to_run = ['LogisticRegression','SVM', 'DecisionTree', 'RandomForest', 'GradientBoost', 'MLP']
-    Models_to_run = ['TensorflowNN']#'LogisticRegression', 'MLP', 'GradientBoost']
+    Models_to_run = ['TensorflowNN']#['TensorflowNN']#'LogisticRegression', 'MLP', 'GradientBoost']
     #Model = 'GradientBoost'
     #(string) 'LogisticRegression', 'SVM', 'SVM-RBF', 'DecisionTree', 'RandomForest',
     #'AdaBoost', 'GradientBoost', 'MLP' model to use when training the data
@@ -93,7 +93,7 @@ def main(SNR_array=[]):
 
 
     #How many times would you like to train the model
-    Bootstrap_Repetitions = 10
+    Bootstrap_Repetitions = 1
     #(int) how many times to train the model to obtain an average accuracy
 
 
@@ -113,7 +113,7 @@ def main(SNR_array=[]):
     PYCOL=['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
 
     #Define the Probabalistic classifiers
-    Probabalistic_Classifiers = ['LogisticRegression','RandomForest','AdaBoost','GradientBoost','MLP','TensorflowNN']
+    Probabalistic_Classifiers = ['LogisticRegression','RandomForest','AdaBoost','GradientBoost','MLP','TensorflowNN', 'TensorflowNN_Opt']
 
 
     Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,PYCOL,Probabalistic_Classifiers)

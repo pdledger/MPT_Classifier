@@ -26,6 +26,7 @@ def Bootstrap_UQ(Number_Of_Classes,UQPL,ActualPL,ProbabilitiesPL,ProbabilitiesUp
     for i in range(Number_Of_Classes):
 #                    temp_probs = np.array([prob for j,prob in enumerate(Probabilities_appended) if Truth_list[j]==i])
         row = len(ActualPL)
+
         temp_probs = np.empty(Number_Of_Classes)
         count = 0
         uqmin = 1.e100
