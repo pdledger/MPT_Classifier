@@ -8,9 +8,9 @@ from matplotlib.patches import Patch
 import seaborn as sns
 
 
-def Plotting(Model,Probabalistic_Classifiers,Object_Confidence_Confidence,Object_Percentiles,DataSet_Name,Savename,Object_Confidence_Mean,Number_Of_Classes,PYCOL,Object_UQ_minval_val,Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist,Testing_noise,reordered_names):
+def Plotting(Model,Probabalistic_Classifiers,Bayesian_Classifiers,Object_Confidence_Confidence,Object_Percentiles,DataSet_Name,Savename,Object_Confidence_Mean,Number_Of_Classes,PYCOL,Object_UQ_minval_val,Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist,Testing_noise,reordered_names):
 
-    if (Model in Probabalistic_Classifiers) or ('MLP' in Model):
+    if (Model in Probabalistic_Classifiers) or (Model in Bayesian_Classifiers ): #or ('MLP' in Model):
         Object_Confidence_Confidence_saving = Object_Confidence_Confidence.reshape(Object_Confidence_Confidence.shape[0], -1)
         Object_Percentiles_saving = Object_Percentiles.reshape(Object_Percentiles.shape[0], -1)
     if type(Testing_noise) == bool:
