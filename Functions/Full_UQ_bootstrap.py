@@ -104,15 +104,21 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             # Keep a record and only output posterior distribution once for each class - just to show examples
             flagged[int(round(Y_test[n]))]=1
                         
-            df2 = pd.DataFrame(np.transpose(postdist),columns=cols)
+            #df2 = pd.DataFrame(np.transpose(postdist),columns=cols)
+            df2 = pd.DataFrame(np.transpose(postdist),columns=reordered_names)
+            
             fig=sns.histplot(df2,multiple="layer",bins=nsamp,stat="count")
+            plt.xlim(0,1)
+
             plt.xlabel("Posterior P(C_k=Class| x )")
 
             
             if type(Testing_noise) == bool:
-                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/posthistdistribution'+str(count)+'.pdf')
+                #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/posthistdistribution'+str(count)+'.pdf')
+                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/posthistdistribution'+str(int(round(Y_test[n])))+'.pdf')
             else:
-                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/posthistdistribution'+str(count)+'.pdf')
+                #plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/posthistdistribution'+str(count)+'.pdf')
+                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/posthistdistribution'+str(int(round(Y_test[n])))+'.pdf')
             plt.close()
             print("Completed posterior plots")
             del fig
@@ -152,9 +158,11 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                 plt.xlim(0,1)
                 #plt.show()
                 if type(Testing_noise) == bool:
-                    plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/postkdedistribution'+str(count)+'.pdf')
+                    #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/postkdedistribution'+str(count)+'.pdf') 
+                    plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/postkdedistribution'+str(int(round(Y_test[n])))+'.pdf')
                 else:
-                    plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/poskdedistribution'+str(count)+'.pdf')
+                    #plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/poskdedistribution'+str(count)+'.pdf')
+                    plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/poskdedistribution'+str(int(round(Y_test[n])))+'.pdf')
                 plt.close()
             except:
                 print("Could not generate a kde plot for",Model,Testing_noise)
@@ -184,9 +192,11 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             plt.ylabel(r'Posterior probability $p(C_k|$data)')
             plt.legend(handles=Legend_elements)
             if type(Testing_noise) == bool:
-                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint95snapshotfigure'+str(count)+'.pdf')
+                #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint95snapshotfigure'+str(count)+'.pdf') #int(round(Y_test[n]))
+                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint95snapshotfigure'+str(int(round(Y_test[n])))+'.pdf')
             else:
-                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint95snapshotfigure'+str(count)+'.pdf')
+                #plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint95snapshotfigure'+str(count)+'.pdf')
+                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint95snapshotfigure'+str(int(round(Y_test[n])))+'.pdf')
             plt.close()
 
             # Plot out bar graphs showing output for the uq value associated with this output using 90 % CI
@@ -211,9 +221,11 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             plt.ylabel(r'Posterior probability $p(C_k|$data)')
             plt.legend(handles=Legend_elements)
             if type(Testing_noise) == bool:
-                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf')
+                #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf') #int(round(Y_test[n]))
+                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(int(round(Y_test[n])))+'.pdf')
             else:
-                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf')
+                #plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf')
+                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(int(round(Y_test[n])))+'.pdf')
             plt.close()
 
 ##            # Plot out bar graphs showing output for the uq value associated with this output

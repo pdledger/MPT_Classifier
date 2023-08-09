@@ -48,8 +48,10 @@ from Full_UQ_bootstrap import *
 
 from Plot_comparison_features import *
 
+from ApplySVD import *
 
-def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers):
+def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,
+              PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features):
 
     #where to save the data
     if Features==['Pri1','Pri2','Pri3']:
@@ -188,7 +190,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
 
                 X_train, X_test, Y_train, Y_test = model_selection.train_test_split(Input_Array[:,:-1], Input_Array[:,-1], test_size=test_size, shuffle=False)
 
-
+                
                 #Add the noise to the training data
                 if type(Training_noise)==bool:
                     X_train = X_train[:,1:]
@@ -240,10 +242,18 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                         Y_test = np.zeros((1,)) + np.asarray(input[:,-1])
                         X_test = input[:, 1:-1]
 
-                # X_train_norm = X_train
-                # X_test_norm = X_test
-                X_train_norm = (X_train-X_Means)/X_SD
-                X_test_norm = (X_test-X_Means)/X_SD
+                #X_train_norm = (X_train-X_Means)/X_SD
+                #X_test_norm = (X_test-X_Means)/X_SD
+
+                # Give an option to create a reduced number of features by applying SVD
+                if Reduce_Features == True:
+                    X_train_norm, X_test_norm = ApplySVD (X_test,X_train, Testing_noise,DataSet_Name,Model,Savename )
+
+                else:
+                    X_train_norm = (X_train-X_Means)/X_SD
+                    X_test_norm = (X_test-X_Means)/X_SD
+                    
+                
 
                 # Plotting comparison figures. Currently this is only supported for one test class.
                 if (k == 1) & (Plot_Comparison_Figures is True) & (Load_External_Data is True) & (X_test_norm.ndim == 1):

@@ -62,9 +62,13 @@ def main(SNR_array=[]):
     #User Inputs
 
     #DataSet_Name = 'UK_Coin_Experimental_noisytestdata_magnetic_coins/UK_Coin_Al_0.84_Sig_2.4'
-    #DataSet_Name = 'PLTest/Test15febmgcoins_Al_0.84_Sig_2.4'
+    #DataSet_Name = 'Britishcoinstest_Al_0.84_Sig_2.4'
     DataSet_Name = 'British_Coins/Coins_100_Al_0.84_Sig_2.4'
-
+    #DataSet_Name = 'British-Coins/Coins_500_Al_0.84_Sig_2.4_Al_0.84_Sig_2.4'
+    #DataSet_Name = 'British-Coins/Coins_1000_Al_0.84_Sig_2.4_Al_0.84_Sig_2.4'
+    #DataSet_Name = 'British-Coins-Latest/Coins-500_Al_0.84_Sig_2.4'
+    #DataSet_Name = 'British-Coins-Latest/Coins-1000_Al_0.84_Sig_2.4'
+    DataSet_Name = 'British-Coins-Updated-1p-2p/Coins-1000_Al_0.84_Sig_12.5'
 
 
     # Option to load external testing data from disk. Requires that external_file_loader.py be run first.
@@ -75,6 +79,9 @@ def main(SNR_array=[]):
     # Option to additionally save to disk: the model for each bootstrap iteration, the normalisation coefficients for each,
     # bootstrap iteration, and the input array for each model, Used for debugging.
     Full_Save = False
+
+    # Option to use SVD to reduce the number of features
+    Reduce_Features = True
 
     #Model to be used
     # Optional models
@@ -88,7 +95,7 @@ def main(SNR_array=[]):
 
 
     # Models_to_run = ['LogisticRegression','SVM', 'DecisionTree', 'RandomForest', 'GradientBoost', 'MLP']
-    Models_to_run = ["LogisticRegression","LogisticRegression_Bayesian","ProbFlowNN_Bayesian_Opt"]#'ProbFlowNN_Bayesian']#'LogisticRegression_Bayesian']
+    Models_to_run = ["LogisticRegression_Bayesian","ProbFlowNN_Bayesian_Opt"]#'ProbFlowNN_Bayesian']#'LogisticRegression_Bayesian']
     #(string) 'LogisticRegression', 'SVM', 'SVM-RBF', 'DecisionTree', 'RandomForest',
     #'AdaBoost', 'GradientBoost', 'MLP' model to use when training the data
 
@@ -139,7 +146,10 @@ def main(SNR_array=[]):
             Bootstrap_Repetitions = 1 # Do not perform bootstrap as we already
         # get output as a probability distribution.
 
-    Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers)
+    Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,
+              Full_Save,Models_to_run,Features,Bootstrap_Repetitions,PYCOL,
+              Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,
+              Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features)
 
 
 

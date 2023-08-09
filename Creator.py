@@ -14,13 +14,15 @@
 #Dataset
 
 #Dataset name
-Name = 'Class_8/Class_8_1000'
+#Name = 'Class_8/Class_8_1000'
+Name = "British-Coins-Updated-1p-2p/Coins-1000"
 #(string) Name of the dataset
 
 #Frequencies to evaluate at
 import numpy as np
 
 
+# This is the same vector of frequencies that the measurements in Measurements/Measurement-Latest were saved for.
 Frequencies = np.array([119.25,178.875,238.5,298.125,357.75,477,596.25,715.5,954,1192.5,1431,1908,2385,2862,3816,4770,5724,7632,9540,12402,16218,20988,26712,34344,43884,57240,73458,95400])
 Frequencies = Frequencies*6.28 #Convert to rad/s
 
@@ -41,10 +43,12 @@ Frequencies = Frequencies*6.28 #Convert to rad/s
 #Classes to include
 #Coin Problem
 #Classes = ['US_Coins']
-#Classes = ['British_Coins']
+#Classes = ["British_Coins"]
+Classes = ["British_Coins_Updated_1p_2p"]
+
 
 #8 and 15 class problem
-Classes = ['Realistic']
+#Classes = ['Realistic']
 #(list) list of strings for the classes to be included in the training set
 #this is hierarchic so includes all subclasses of a given class. Can also
 #be 'all' to include all classes.
@@ -54,14 +58,14 @@ Classes = ['Realistic']
 
 #Global number of results
 #Coin Problem
-#extend_results = 'global_obj'
+extend_results = 'global_obj'
 #8 and 15 class problem
-extend_results = 'global_class'
+#extend_results = 'global_class'
 #(string) 'global_obj','global_class' or 'classwise' if 'objectwise' required use scaling file
 
 #Number of secondary results if 'global_obj'
 #Coin Problem
-Num_Results = 50
+Num_Results = 1000
 #(int) Number of secondary results per object
 
 
@@ -82,7 +86,7 @@ class_names = ['Clothing','Pocket Items','Wrist Items','Earrings','Pendants','Ri
 
 #Number of results if 'global_class'
 #8 and 15 class problem
-Num_Results_class = 1000
+Num_Results_class = 100
 
 #(int) Number of results per class results per class if 'classwise'
 class_num_results = [150,100,100,100,200,100,100,300]
@@ -91,9 +95,9 @@ class_num_results = [150,100,100,100,200,100,100,300]
 
 #Labeler False,'Classwise', 'Objectwise'
 #Coin Problem
-#Label_Data = 'Objectwise'
+Label_Data = 'Objectwise'
 #8 and 15 class
-Label_Data = 'Classwise'
+#Label_Data = 'Classwise'
 #(boolean or string) create training labels for the dataset
 
 #If Label_Data = 'Objectwise' you can create a dictionary of names for each object
@@ -104,12 +108,20 @@ Name_Objects = True
 #Object Dictionary
 #Coin Problem
 #Object_Names_dictionary = {'Cent_Coin':r'Cent', 'Dime_Coin_Cladded_2':r'Dime', 'Nickel_Coin':r'Nickel', 'QuarterDollar_Coin_2':r'Quarter', 'HalfDollar_Coin_2':r'Half'}
-Object_Names_dictionary ={'Two_Pound':r'£2', 'Ten_p_pre':r'10p', 'One_Pound':r'£1', 'Two_p_pre':r'2p', 'Twenty_p':r'20p', 'Five_p_pre':r'5p', 'Fifty_p':r'50p', 'One_p_pre':r'1p'}
+#Object_Names_dictionary ={'Two_Pound':r'£2', 'Ten_p_pre':r'10p', 'One_Pound':r'£1', 'Two_p_pre':r'2p', 'Twenty_p':r'20p', 'Five_p_pre':r'5p',
+#                            'Fifty_p':r'50p', 'One_p_pre':r'1p'}
+Object_Names_dictionary ={"Two_Pound":r"£2", "Ten_Pence":r"10p_(new)", "Ten_Pence_non_magnetic":r"10p_(old)", "One_Pound":r"£1", "Two_Penny":r"2p_(new)",
+                          "Two_Penny_non_magnetic":r"2p_(old)", "Twenty_Pence":r"20p", "Five_Pence":r"5p_(new)", "Five_Pence_non_magnetic":r"5p_(old)",
+                          "Fifty_Pence":r"50p", "One_Penny":r"1p_(new)", "One_Penny_non_magnetic":r"1p_(old)"}
+
 #(dictionary) name the objects as you wish them to appear in the classificaiton
 
 #Coin Problem
 #Name_Order = ['Cent_Coin','Dime_Coin_Cladded_2','Nickel_Coin','QuarterDollar_Coin_2','HalfDollar_Coin_2']
-Name_Order = ['One_p_pre','Two_p_pre','Five_p_pre','Ten_p_pre','Twenty_p','Fifty_p','One_Pound','Two_Pound']
+#Name_Order = ['One_p_pre','Two_p_pre','Five_p_pre','Ten_p_pre','Twenty_p','Fifty_p','One_Pound','Two_Pound']
+Name_Order = ["One_Penny","One_Penny_non_magnetic","Two_Penny","Two_Penny_non_magnetic","Five_Pence","Five_Pence_non_magnetic",
+              "Ten_Pence","Ten_Pence_non_magnetic","Twenty_Pence","Fifty_Pence","One_Pound","Two_Pound"]
+
 #(list) list the order of the names as you wish them to appear in the classification
 
 
@@ -129,7 +141,7 @@ Alpha_scale = 0.84
 
 
 #Sigma scale
-Sigma_scale = 2.4
+Sigma_scale = 12.5#2.4 # 2.4 was original scaling but increased to allow for possible upto 10% Zn in 1p & 2p coins.
 #(float) percentage of original if Scale_type = 'Global' (this is a standard deviation)
 
 
@@ -536,7 +548,10 @@ for i in range(np.shape(Descriptions)[0]):
         if OBJ in Descriptions[i,2]:
             Overview[j][3] += (float(Descriptions[i][3])-Overview[j][2])**2
             if len(Descriptions[i,5].split(',')) == 1:
-                Overview[j][5] += (float(Descriptions[i][5])-Overview[j][4])**2
+                # added np.asarryay to Overview[j][4] to fix crash with some datasets using python 3.10.4
+                # possibly to fix issues with objects with more than 1 material
+                Overview[j][5] += (float(Descriptions[i][5])-np.asarray(Overview[j][4]))**2
+                #Overview[j][5] += (float(Descriptions[i][5])-Overview[j][4])**2
             else:
                 if type(Overview[j][5]) == int:
                     Overview[j][5] = [(list(map(float,Descriptions[i][5].split(',')))[k]-Overview[j][4][k])**2 for k in range(len(Overview[j][4]))]
