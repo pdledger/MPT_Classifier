@@ -63,25 +63,27 @@ def main(SNR_array=[]):
 
     #DataSet_Name = 'UK_Coin_Experimental_noisytestdata_magnetic_coins/UK_Coin_Al_0.84_Sig_2.4'
     #DataSet_Name = 'Britishcoinstest_Al_0.84_Sig_2.4'
-    DataSet_Name = 'British_Coins/Coins_100_Al_0.84_Sig_2.4'
+    #DataSet_Name = 'British_Coins/Coins_100_Al_0.84_Sig_2.4'
     #DataSet_Name = 'British-Coins/Coins_500_Al_0.84_Sig_2.4_Al_0.84_Sig_2.4'
     #DataSet_Name = 'British-Coins/Coins_1000_Al_0.84_Sig_2.4_Al_0.84_Sig_2.4'
     #DataSet_Name = 'British-Coins-Latest/Coins-500_Al_0.84_Sig_2.4'
     #DataSet_Name = 'British-Coins-Latest/Coins-1000_Al_0.84_Sig_2.4'
     DataSet_Name = 'British-Coins-Updated-1p-2p/Coins-1000_Al_0.84_Sig_12.5'
-
+    #DataSet_Name = 'US_Coin_PL/Coins-200_Al_0.84_Sig_12.5'
+    #DataSet_Name = 'US-Coins-PL-10Aug23/Coins-1000_Al_0.84_Sig_12.5'
 
     # Option to load external testing data from disk. Requires that external_file_loader.py be run first.
-    Load_External_Data = False #True
+    Load_External_Data = True #False
     # Option to plot comparison figures between the input array of simulated data and the external test data.
     # Currently only supported for a single class test set.
-    Plot_Comparison_Figures = False
+    # This means that in the external file loader we need to select to read only one of the different coins say
+    Plot_Comparison_Figures = False#True
     # Option to additionally save to disk: the model for each bootstrap iteration, the normalisation coefficients for each,
     # bootstrap iteration, and the input array for each model, Used for debugging.
     Full_Save = False
 
     # Option to use SVD to reduce the number of features
-    Reduce_Features = True
+    Reduce_Features = True#False#True
 
     #Model to be used
     # Optional models
@@ -103,7 +105,7 @@ def main(SNR_array=[]):
 
     #Features
     Features = ['Pri1', 'Pri2', 'Pri3']
-    # Features = ['Eig1', 'Eig2', 'Eig3']
+    #Features = ['Eig1', 'Eig2', 'Eig3']
     #(list) list of features to be used options:
     #'Eig1','Eig2','Eig3','Pri1','Pri2','Pri3','Dev2','Dev3','Com'
     #Eigenvalues, Principal invarients, Deviatoric invarients, Comutator

@@ -19,16 +19,50 @@ from skopt.space import Real
 from skopt.space import Categorical
 from skopt.utils import use_named_args
 from skopt import gp_minimize
+import tensorflow as tf
 
-def Train_Probflow(Model,X_train_norm,Y_train,Number_Of_Classes):
+def Train_Probflow(Model,X_train_norm,Y_train,Number_Of_Classes,Alpha,Beta):
 
     D=np.shape(X_train_norm)[1] # D is the number of features
     # Probflow requires float 32 data type
     x=X_train_norm.astype('float32')
     y=Y_train.astype('float32')
 
+    # Set Prior standard deviation
+    #std=10
+    def randn(shape):
+        return tf.random.normal(shape)
     if Model == "LogisticRegression_Bayesian":
         model = pf.LogisticRegression(D, k=Number_Of_Classes)
+        # Fix different priors for Logistic regression
+        # See scale parameter
+        #https://probflow.readthedocs.io/en/latest/user_guide/parameters.html#specialized-parameters
+        # This chooses a prior for sigma^2 (vairance) as InverseGamma(5,5) (alpha, beta could be changed)
+        # Then obtain std. dev as sqrt(sigma^2).
+        # Here different priors for the std dev as the hyperparameter of the priors for both w and b are setup.
+
+        # This would assume alpha = beta = 5
+        #std_w= pf.ScaleParameter()
+        #std_b= pf.ScaleParameter()
+        std_w = pf.Parameter(posterior=pf.InverseGamma,
+                       prior=pf.InverseGamma(Alpha, Beta),
+                       transform=lambda x: tf.sqrt(x),
+                       initializer={'concentration': randn,
+                                    'scale': randn},
+                       var_transform={'concentration': tf.nn.softplus,
+                                      'scale': tf.nn.softplus})
+        std_b = pf.Parameter(posterior=pf.InverseGamma,
+                       prior=pf.InverseGamma(Alpha, Beta),
+                       transform=lambda x: tf.sqrt(x),
+                       initializer={'concentration': randn,
+                                    'scale': randn},
+                       var_transform={'concentration': tf.nn.softplus,
+                                      'scale': tf.nn.softplus})
+        
+
+        model.weights.prior=pf.Normal(0, std_w)
+        model.bias.prior=pf.Normal(0, std_b)
+
         model.fit(x, y, lr=0.01, epochs=200)
         #model.posterior_plot()
 
@@ -87,6 +121,18 @@ def Train_Probflow(Model,X_train_norm,Y_train,Number_Of_Classes):
             list.append(int(num_dense_nodes))
         list.append(Number_Of_Classes)
         model = pf.DenseClassifier(list)#[D, int(p[0]), int(p[0]), K])
+        # Set Parameters for Prior
+        for L in range(int(num_dense_layers)):
+            #model.parameters[L].prior = pf.Normal(0, pf.ScaleParameter() )
+            model.parameters[L].prior = pf.Normal(0, pf.Parameter(posterior=pf.InverseGamma,
+                                                       prior=pf.InverseGamma(Alpha, Beta),
+                                                       transform=lambda x: tf.sqrt(x),
+                                                       initializer={'concentration': randn,
+                                                                    'scale': randn},
+                                                       var_transform={'concentration': tf.nn.softplus,
+                                                                      'scale': tf.nn.softplus}))
+        
+        
         model.fit(x, y, lr=0.01, epochs=200)
 
 

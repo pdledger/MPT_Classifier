@@ -33,7 +33,7 @@ def ApplySVD (X_test_norm,X_train_norm,Testing_noise,DataSet_Name,Model,Savename
     import matplotlib.pyplot as plt
     plt.semilogy(Msnorm)
     plt.xlabel("$n$")
-    plt.ylabel("$(\Sigma)_{nn}$")
+    plt.ylabel("$(\Sigma)_{nn}/(\Sigma)_{11}$")
 
     if type(Testing_noise) == bool:
         #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/posthistdistribution'+str(count)+'.pdf')

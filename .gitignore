@@ -1,0 +1,9 @@
+#Ignore DataSet directory
+
+DataSets/
+
+
+
+#Ignore Results directory
+
+Results/

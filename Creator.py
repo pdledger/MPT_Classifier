@@ -16,6 +16,8 @@
 #Dataset name
 #Name = 'Class_8/Class_8_1000'
 Name = "British-Coins-Updated-1p-2p/Coins-1000"
+#Name = "US_Coin_PL/Coins-200"
+#Name = "US-Coins-PL-10Aug23/Coins-1000"
 #(string) Name of the dataset
 
 #Frequencies to evaluate at
@@ -42,7 +44,7 @@ Frequencies = Frequencies*6.28 #Convert to rad/s
 
 #Classes to include
 #Coin Problem
-#Classes = ['US_Coins']
+#Classes = ['US_Coins_Updated']
 #Classes = ["British_Coins"]
 Classes = ["British_Coins_Updated_1p_2p"]
 
@@ -107,9 +109,11 @@ Name_Objects = True
 
 #Object Dictionary
 #Coin Problem
+#"US-Coins-PL-10Aug23/Coins-1000"
 #Object_Names_dictionary = {'Cent_Coin':r'Cent', 'Dime_Coin_Cladded_2':r'Dime', 'Nickel_Coin':r'Nickel', 'QuarterDollar_Coin_2':r'Quarter', 'HalfDollar_Coin_2':r'Half'}
 #Object_Names_dictionary ={'Two_Pound':r'£2', 'Ten_p_pre':r'10p', 'One_Pound':r'£1', 'Two_p_pre':r'2p', 'Twenty_p':r'20p', 'Five_p_pre':r'5p',
 #                            'Fifty_p':r'50p', 'One_p_pre':r'1p'}
+#"British-Coins-Updated-1p-2p/Coins-1000"
 Object_Names_dictionary ={"Two_Pound":r"£2", "Ten_Pence":r"10p_(new)", "Ten_Pence_non_magnetic":r"10p_(old)", "One_Pound":r"£1", "Two_Penny":r"2p_(new)",
                           "Two_Penny_non_magnetic":r"2p_(old)", "Twenty_Pence":r"20p", "Five_Pence":r"5p_(new)", "Five_Pence_non_magnetic":r"5p_(old)",
                           "Fifty_Pence":r"50p", "One_Penny":r"1p_(new)", "One_Penny_non_magnetic":r"1p_(old)"}
@@ -117,10 +121,12 @@ Object_Names_dictionary ={"Two_Pound":r"£2", "Ten_Pence":r"10p_(new)", "Ten_Pen
 #(dictionary) name the objects as you wish them to appear in the classificaiton
 
 #Coin Problem
+#"US-Coins-PL-10Aug23/Coins-1000"
 #Name_Order = ['Cent_Coin','Dime_Coin_Cladded_2','Nickel_Coin','QuarterDollar_Coin_2','HalfDollar_Coin_2']
 #Name_Order = ['One_p_pre','Two_p_pre','Five_p_pre','Ten_p_pre','Twenty_p','Fifty_p','One_Pound','Two_Pound']
+#"British-Coins-Updated-1p-2p/Coins-1000"
 Name_Order = ["One_Penny","One_Penny_non_magnetic","Two_Penny","Two_Penny_non_magnetic","Five_Pence","Five_Pence_non_magnetic",
-              "Ten_Pence","Ten_Pence_non_magnetic","Twenty_Pence","Fifty_Pence","One_Pound","Two_Pound"]
+             "Ten_Pence","Ten_Pence_non_magnetic","Twenty_Pence","Fifty_Pence","One_Pound","Two_Pound"]
 
 #(list) list the order of the names as you wish them to appear in the classification
 

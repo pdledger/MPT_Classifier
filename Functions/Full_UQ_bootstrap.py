@@ -3,10 +3,12 @@ import statistics
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import time
 from matplotlib.patches import Patch
 from scipy.stats import gaussian_kde
 
-def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names):
+def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names,Alpha,Beta):
+
 
     if k != 0:
         disp("Warning attempting to do more than a single bootstrap iteration")
@@ -48,6 +50,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 
 #   To keep things simple go thorugh an item at a time
     count=0
+    df_all_classes=[]
     for n in range(N):
         print("Item",n+1," of ",N)
         for myk in range(Number_Of_Classes):
@@ -137,6 +140,12 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 ##            plt.close()
 ##            print("Completed posterior plots")
 ##            del fig
+
+            # If the vairance of postdist[myk,:] for each class myk is small then kde type plots produce errors
+            # in seaborn. Check the vairance of postdist[myk,:] and if very small replace with a normal centered
+            # in the correct position with small vairance.
+
+            postdist = checkvarience(postdist,Number_Of_Classes)
 
             #data = np.random.normal(10,3,100) # Generate Data
             try:
@@ -228,6 +237,44 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                 plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(int(round(Y_test[n])))+'.pdf')
             plt.close()
 
+
+            # Try to make a seaborn violin plot.
+            # First create a Pandas data frame
+            # Store the data in the right way
+            Pdfclass = []
+            Pdfdata = np.zeros(nsamp*Number_Of_Classes)
+            sample=0
+            for myk in range(Number_Of_Classes):
+                for mysample in range(nsamp):    
+                    Pdfclass.append(reordered_names[myk])
+                    # Add a small perturbation to avoid problems with seaborn plotting if all values are the same.
+                    Pdfdata[sample]=(postdist[myk,mysample])
+                    #if  Pdfdata[sample] < 0.:
+                    #    print("error negative prob sample", Pdfdata[sample],round(Y_test[n]),myk)
+                    #if  Pdfdata[sample] > 1. +np.random.rand(1)*np.finfo(float).eps:
+                    #    print("prob too large sample", Pdfdata[sample],round(Y_test[n]),myk)
+                    sample = sample+1
+            # Set up a dictionary
+            Pddict = { "Class": Pdfclass, "Post_prob": Pdfdata}
+
+            # Convert to a Pandas data frame
+            df=pd.DataFrame.from_dict(Pddict)
+            print(df)
+            # Create a violin plot
+            ax = sns.violinplot(data=df, x="Post_prob",y="Class",cut=0,scale="width")
+            ax.set(xlabel ='Posterior probability $p(C_k|$data)', ylabel = 'Classes $C_k$', title = 'Classification prediction using measured data for object='+reordered_names[int(round(Y_test[n]))])
+            #plt.show()
+            if type(Testing_noise) == bool:
+                #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf') #int(round(Y_test[n]))
+                plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/violinplot'+str(int(round(Y_test[n])))+'.pdf')
+            else:
+                #plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf')
+                plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/violinplot'+str(int(round(Y_test[n])))+'.pdf')
+            plt.close()
+            df_all_classes.append(df)
+
+     
+
 ##            # Plot out bar graphs showing output for the uq value associated with this output
 ##            xb = np.arange(Number_Of_Classes)
 ##            print(xb)
@@ -303,4 +350,18 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                    
 
 
-    return ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL
+    return ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL,df_all_classes
+
+def checkvarience(postdist,Number_Of_Classes):
+    # Check the vairance of the posterior samples if below a tolerance replace by a normal with small
+    # variance to avoid issues with seaborn plotting.
+    Tol=1e-12
+    dum,Nsamp = np.shape(postdist)
+    for myk in range(Number_Of_Classes):
+        mu = statistics.mean(postdist[myk,:])
+        var = statistics.variance(postdist[myk,:])
+        if var < Tol:
+            postdist[myk,:] = np.fmax(0.*np.ones(shape=(1,Nsamp)),np.fmin(1.*np.ones(shape=(1,Nsamp)),np.random.normal(mu,np.sqrt(Tol),(1,Nsamp))))
+            #print(mu,var,postdist[myk,:])
+    return postdist
+        
