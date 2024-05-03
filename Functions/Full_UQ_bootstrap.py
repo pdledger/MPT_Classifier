@@ -1,5 +1,5 @@
 import numpy as np
-import statistics
+import statistics 
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -65,8 +65,8 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                 # model.prob gives the MAP estimate for P(C=k| X_test_norm[n,:])
                 # now as a probability distribution. We already have the MAP estimate (in probs)
                 # - we could get the mean too, and std. deviation
-                mean = statistics.mean(probk[0,:]) # don't store as we have the MAP estimate in  probs?
-                std = statistics.stdev(probk[0,:])
+                mean = statistics.mean((probk[0,:]).tolist()) # don't store as we have the MAP estimate in  probs?
+                std = statistics.stdev((probk[0,:]).tolist())
                 pmean[n,myk] = mean
       
                 # This would construct a 95 % confidence interval

@@ -26,4 +26,6 @@ def Sklearn_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Ac
             ProbabilitiesPL = model.predict_proba(X_test_norm)
         else:
             ProbabilitiesPL = np.vstack((ProbabilitiesPL,model.predict_proba(X_test_norm)))
+    else:
+        probs=[]
     return Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs

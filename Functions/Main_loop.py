@@ -52,7 +52,7 @@ from Plot_comparison_features import *
 from ApplySVD import *
 
 def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,
-              PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features):
+              PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features,Trainer_Settings):
 
     #where to save the data
     if Features==['Pri1','Pri2','Pri3']:
@@ -199,6 +199,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                 X_test = Add_Noise(X_test,Testing_noise,Tensors,Features,Frequencies,Feature_Dic)
 
             for ii, Model in enumerate(Models_to_run):
+                print(Model)
                 if Model in Probflow_Classifiers:
                     # Set HyperParameters for Inverse Gamma Distributions
                     # Choosing Alpha, Beta small should result in an non-informative prior
@@ -230,6 +231,13 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                                 os.makedirs('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename)
                         except:
                             pass
+                        if type(Testing_noise) == bool:
+                            with open('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Trainer_Settings.csv', 'w') as fset:
+                                fset.write(str(np.asarray(Trainer_Settings)))
+                        else:
+                            #Print a copy of the Settings used as a record
+                            with open('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Trainer_Settings.csv', 'w') as fset:
+                                fset.write(str(np.asarray(Trainer_Settings)))
 
                         # Here, we save Input_Array to disk.
                         if Full_Save is True:
@@ -306,81 +314,85 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                             # This will only work without SVD being applied
                             Plot_comparison_features(Frequencies,X_train,X_test,Y_train,DataSet_Name,Model,Savename,Testing_noise)
 
-                        # Fit model on training set
-                        if Model in Scikit_Classifiers:
-                            model = Train_Scikit(Model,X_train_norm,Y_train)
-                        elif Model in Tenflow_Classifiers:
-                            model, probability_model = Train_Tenflow(Model,X_train_norm,Y_train)
-                        elif Model in Probflow_Classifiers:
-                            model = Train_Probflow(Model,X_train_norm,Y_train,Number_Of_Classes,Alpha,Beta)
-                        else:
-                            print("Classifier not found")
-                            
-                            
-                        # save the model to disk
-                        if Full_Save is True:
-                            try:
-                                if type(Testing_noise) == bool:
-                                    joblib.dump(model, 'Results/' + DataSet_Name + '/Noiseless/' + Model + '/' + Savename + '/model' + str(k)+'.sav')
-                                else:
-                                    joblib.dump(model, 'Results/' + DataSet_Name + '/Noise_' + str(Testing_noise) + '/' + Model + '/' + Savename + '/model' + str(k)+'.sav')
-                            except:
-                                pass
+                        if Plot_Comparison_Figures is False:
 
-                        #Obtain results
-                        if Model in Scikit_Classifiers:
-                            Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Sklearn_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model)
-                        elif Model in Tenflow_Classifiers:
-                            Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Tenflow_results(k,model,probability_model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model)
-                        elif Model in Probflow_Classifiers:
-                            Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Probflow_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model,Number_Of_Classes)    
-            
+                            # Fit model on training set
+                            if Model in Scikit_Classifiers:
+                                model = Train_Scikit(Model,X_train_norm,Y_train)
+                            elif Model in Tenflow_Classifiers:
+                                model, probability_model = Train_Tenflow(Model,X_train_norm,Y_train)
+                            elif Model in Probflow_Classifiers:
+                                model = Train_Probflow(Model,X_train_norm,Y_train,Number_Of_Classes,Alpha,Beta)
+                            else:
+                                print("Classifier not found")
+                                
+                                
+                            # save the model to disk
+                            if Full_Save is True:
+                                try:
+                                    if type(Testing_noise) == bool:
+                                        joblib.dump(model, 'Results/' + DataSet_Name + '/Noiseless/' + Model + '/' + Savename + '/model' + str(k)+'.sav')
+                                    else:
+                                        joblib.dump(model, 'Results/' + DataSet_Name + '/Noise_' + str(Testing_noise) + '/' + Model + '/' + Savename + '/model' + str(k)+'.sav')
+                                except:
+                                    pass
+
+                            #Obtain results
+                            if Model in Scikit_Classifiers:
+                                Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Sklearn_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model)
+                            elif Model in Tenflow_Classifiers:
+                                Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Tenflow_results(k,model,probability_model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model)
+                            elif Model in Probflow_Classifiers:
+                                Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Probflow_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model,Number_Of_Classes)    
+                
+                            if (Model in Probabalistic_Classifiers): #or ('MLP' in Model):
+                                ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL = Simple_UQ_bootstrap(k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL)
+                            if (Model in Bayesian_Classifiers): #or ('MLP' in Model):
+                                # included output of snapshots for testing
+                               ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL,df = Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names,Alpha,Beta)
+                               Vary_alpha_beta.append(df)
+
+                    if Plot_Comparison_Figures is False:
+             #          Saving score, prediction, and true class to disk.
+                        External_data_save(Load_External_Data,DataSet_Name,Model,Savename,Results,Predictions,Actual,Testing_noise)
+
+
+                        #Reorder
+                        # I think this creates a list of array, but order is not changed
+                        # Probabilities_appended looks strange. Recoded as stacked arrays (see above )
+                        Truth_list = [item for sublist in Actual for item in sublist]
+                        Prediction_list = [item for sublist in Predictions for item in sublist]
+                        Probabilities_appended = [item for sublist in Probabilities for item in sublist]
+
+                        # TODO add check for odd/even when calculating median.
+
+                        #Calculate the confidence of the predicitons
                         if (Model in Probabalistic_Classifiers): #or ('MLP' in Model):
-                            ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL = Simple_UQ_bootstrap(k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL)
-                        if (Model in Bayesian_Classifiers): #or ('MLP' in Model):
-                            # included output of snapshots for testing
-                           ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL,df = Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names,Alpha,Beta)
-                           Vary_alpha_beta.append(df)
+                            Object_Confidence_Confidence,Object_Percentiles,Object_Confidence_Mean,Object_UQ_minval_val, Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist, Sorted_posteriors = Bootstrap_UQ(Number_Of_Classes,UQPL,ActualPL,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL)
+            ##            elif (Model in Bayesian_Classifiers):
+            ##                Object_Confidence_Confidence,Object_Percentiles,Object_Confidence_Mean,Object_UQ_minval_val, Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist, Sorted_posteriors = Bayesian_UQ(Number_Of_Classes,UQPL,ActualPL,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL)
+                        print("Completed predictions")
 
-         #          Saving score, prediction, and true class to disk.
-                    External_data_save(Load_External_Data,DataSet_Name,Model,Savename,Results,Predictions,Actual,Testing_noise)
+            #           obtain confusion matrix
+                        My_confusion_matrix(Truth_list,Prediction_list,Testing_noise,DataSet_Name,Model,Savename)
 
+            #           create report and write report to disk
+                        Kappa = cohen_kappa_score(Truth_list,Prediction_list)
+                        Write_report(DataSet_Name,Model,Testing_noise,Savename,Kappa,Names,Truth_list,Prediction_list, Object_names,Labels)
 
-                    #Reorder
-                    # I think this creates a list of array, but order is not changed
-                    # Probabilities_appended looks strange. Recoded as stacked arrays (see above )
-                    Truth_list = [item for sublist in Actual for item in sublist]
-                    Prediction_list = [item for sublist in Predictions for item in sublist]
-                    Probabilities_appended = [item for sublist in Probabilities for item in sublist]
+            #           plot results and save to disk for non probablistic classifiers.
+                        if (Model not in Bayesian_Classifiers):
+                            Plotting(Model,Probabalistic_Classifiers,Bayesian_Classifiers,Object_Confidence_Confidence,Object_Percentiles,DataSet_Name,Savename,Object_Confidence_Mean,Number_Of_Classes,PYCOL,Object_UQ_minval_val,Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist,Testing_noise,reordered_names)
+                            print("Completed plotting")
 
-                    # TODO add check for odd/even when calculating median.
-
-                    #Calculate the confidence of the predicitons
-                    if (Model in Probabalistic_Classifiers): #or ('MLP' in Model):
-                        Object_Confidence_Confidence,Object_Percentiles,Object_Confidence_Mean,Object_UQ_minval_val, Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist, Sorted_posteriors = Bootstrap_UQ(Number_Of_Classes,UQPL,ActualPL,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL)
-        ##            elif (Model in Bayesian_Classifiers):
-        ##                Object_Confidence_Confidence,Object_Percentiles,Object_Confidence_Mean,Object_UQ_minval_val, Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist, Sorted_posteriors = Bayesian_UQ(Number_Of_Classes,UQPL,ActualPL,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL)
-                    print("Completed predictions")
-
-        #           obtain confusion matrix
-                    My_confusion_matrix(Truth_list,Prediction_list,Testing_noise,DataSet_Name,Model,Savename)
-
-        #           create report and write report to disk
-                    Kappa = cohen_kappa_score(Truth_list,Prediction_list)
-                    Write_report(DataSet_Name,Model,Testing_noise,Savename,Kappa,Names,Truth_list,Prediction_list, Object_names,Labels)
-
-        #           plot results and save to disk for non probablistic classifiers.
-                    if (Model not in Bayesian_Classifiers):
-                        Plotting(Model,Probabalistic_Classifiers,Bayesian_Classifiers,Object_Confidence_Confidence,Object_Percentiles,DataSet_Name,Savename,Object_Confidence_Mean,Number_Of_Classes,PYCOL,Object_UQ_minval_val,Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist,Testing_noise,reordered_names)
-                        print("Completed plotting")
-
-                        if Bootstrap_Repetitions==1:
-                           # For purpose of comparion provide a snapshot of the result obtained for the first of classification in each class.
-                           # Do only for the first snapshot (if there are multiple)
-                           # In this case ProbabilitiesUpPL, ProbabilitiesLowPL are prob estimate +/- UQPL - only contains value for single bootstap iteration
-                            Output_snapshot(model,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,Y_test,Number_Of_Classes,PYCOL,reordered_names,DataSet_Name,Testing_noise,Model,Savename)
-                            print("Completed snapshot classification")
+                            if Bootstrap_Repetitions==1:
+                               # For purpose of comparion provide a snapshot of the result obtained for the first of classification in each class.
+                               # Do only for the first snapshot (if there are multiple)
+                               # In this case ProbabilitiesUpPL, ProbabilitiesLowPL are prob estimate +/- UQPL - only contains value for single bootstap iteration
+                                Output_snapshot(model,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,Y_test,Number_Of_Classes,PYCOL,reordered_names,DataSet_Name,Testing_noise,Model,Savename)
+                                print("Completed snapshot classification")
                                         
 
                 # Create plots of Kolmogorov-Smirnov tests to compare results for different alpha,beta
-                Jensen_Shannon(Vary_alpha_beta,AlphaList,BetaList,Number_Of_Classes,reordered_names,DataSet_Name,Testing_noise,Model,Savename)
+                if (Model in Probflow_Classifiers) and (Plot_Comparison_Figures is False):
+                    Jensen_Shannon(Vary_alpha_beta,AlphaList,BetaList,Number_Of_Classes,reordered_names,DataSet_Name,Testing_noise,Model,Savename)

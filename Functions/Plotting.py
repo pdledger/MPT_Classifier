@@ -9,20 +9,27 @@ import seaborn as sns
 
 
 def Plotting(Model,Probabalistic_Classifiers,Bayesian_Classifiers,Object_Confidence_Confidence,Object_Percentiles,DataSet_Name,Savename,Object_Confidence_Mean,Number_Of_Classes,PYCOL,Object_UQ_minval_val,Object_UQ_minval_low,Object_UQ_minval_up,Object_UQ_maxval_val,Object_UQ_maxval_low,Object_UQ_maxval_up,Bin_edges,Hist,Testing_noise,reordered_names):
+    if type(Testing_noise) == bool:
+        # Again looks like median saved as mean
+        np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Posteriors_Mat.csv',Object_Confidence_Mean,delimiter=',')
+    else:
+        # Again looks like median saved as mean
+        np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Posteriors_Mat.csv',Object_Confidence_Mean,delimiter=',')
+        
 
     if (Model in Probabalistic_Classifiers) or (Model in Bayesian_Classifiers ): #or ('MLP' in Model):
         Object_Confidence_Confidence_saving = Object_Confidence_Confidence.reshape(Object_Confidence_Confidence.shape[0], -1)
         Object_Percentiles_saving = Object_Percentiles.reshape(Object_Percentiles.shape[0], -1)
-    if type(Testing_noise) == bool:
-        # Again looks like median saved as mean
-        np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Posteriors_Mat.csv',Object_Confidence_Mean,delimiter=',')
-        np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Confidence_Mat.csv',Object_Confidence_Confidence_saving,delimiter=',')
-        np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Percentiles_Mat.csv',Object_Percentiles_saving,delimiter=',')
-    else:
-        # Again looks like median saved as mean
-        np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Posteriors_Mat.csv',Object_Confidence_Mean,delimiter=',')
-        np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Confidence_Mat.csv',Object_Confidence_Confidence_saving,delimiter=',')
-        np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Percentiles_Mat.csv',Object_Percentiles_saving,delimiter=',')
+        if type(Testing_noise) == bool:
+            # Again looks like median saved as mean
+            #np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Posteriors_Mat.csv',Object_Confidence_Mean,delimiter=',')
+            np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Confidence_Mat.csv',Object_Confidence_Confidence_saving,delimiter=',')
+            np.savetxt('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/Percentiles_Mat.csv',Object_Percentiles_saving,delimiter=',')
+        else:
+            # Again looks like median saved as mean
+            #np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Posteriors_Mat.csv',Object_Confidence_Mean,delimiter=',')
+            np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Confidence_Mat.csv',Object_Confidence_Confidence_saving,delimiter=',')
+            np.savetxt('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/Percentiles_Mat.csv',Object_Percentiles_saving,delimiter=',')
 
 #               Plot out bar graphs for median and 2.5, 97.5 % percentiles
     lims = np.ones([Number_Of_Classes],dtype=bool)
