@@ -120,6 +120,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
 
         #Create a way to keep track of the data
         Input_Array = np.zeros([len(Labels),Feature_Size*len(Frequencies)+2])
+        print(np.shape(Input_Array),np.shape(Feature_Data))
         Input_Array[:,0] = np.arange(len(Labels))
         Input_Array[:,1:-1] = Feature_Data
         Input_Array[:,-1] = Labels
