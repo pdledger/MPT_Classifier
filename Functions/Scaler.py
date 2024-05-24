@@ -110,6 +110,7 @@ def Scale(Object,AlphaValue,SigmaValue,AlphaSD,SigmaSD,Samples):
             AllNewFrequencies = np.zeros([len(Frequencies),Samples])
             AllNewEigenvalues = np.zeros([len(Frequencies),3,Samples],dtype=complex)
             AllNewTensors = np.zeros([len(Frequencies),9,Samples],dtype=complex)
+            AllNewN0 = np.zeros([3,3,Samples],dtype=float)
             AllNewAlphas = []
             AllNewSigmas = []
             
@@ -149,12 +150,13 @@ def Scale(Object,AlphaValue,SigmaValue,AlphaSD,SigmaSD,Samples):
                 AllNewFrequencies[:,i] = NewFrequencies
                 AllNewEigenvalues[:,:,i] = NewEigenvalues
                 AllNewTensors[:,:,i] = NewTensors
+                AllNewN0[:,:,i] = NewN0
     
     
     
     
     
-    return Frequencies, Eigenvalues, Tensors, AllNewFrequencies, AllNewEigenvalues, AllNewTensors, AllNewAlphas, AllNewSigmas#, AlScales, SigScales
+    return Frequencies, Eigenvalues, Tensors, N0, AllNewFrequencies, AllNewEigenvalues, AllNewTensors, AllNewAlphas, AllNewSigmas, AllNewN0#, AlScales, SigScales
 
 
 

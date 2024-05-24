@@ -39,7 +39,7 @@ def AGWNr(Vec,SNR_db):
     return Vec+noise_volts
 
 
-def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
+def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic,Angles,AngleFlag):
     if type(Training_noise)!=str:
         for i in range(len(X_train)):
 
@@ -60,6 +60,13 @@ def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
             NoisyEigenvalues[:,0] = AGWNr(np.real(Eigenvalues[:,0]),Training_noise)+1j*AGWNr(np.imag(Eigenvalues[:,0]),Training_noise)
             NoisyEigenvalues[:,1] = AGWNr(np.real(Eigenvalues[:,1]),Training_noise)+1j*AGWNr(np.imag(Eigenvalues[:,1]),Training_noise)
             NoisyEigenvalues[:,2] = AGWNr(np.real(Eigenvalues[:,2]),Training_noise)+1j*AGWNr(np.imag(Eigenvalues[:,2]),Training_noise)
+
+            Angle = np.zeros(len(Frequencies))
+            NoisyAngle=np.zeros(len(Frequencies))
+            if AngleFlag=="On":
+                # Add noise also to the angles
+                Angle[:] = Angles[int(X_train[i,0]),:]
+                NoisyAngle = AGWNr(Angle,Training_noise)
             
             #Tensor[:,0] = AGWN(Tensor[:,0],Training_noise)
             #Tensor[:,4] = AGWN(Tensor[:,4],Training_noise)
@@ -78,6 +85,7 @@ def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
             # this has been updated to compute invariants from eigenvalues as noise has been added to eigenvalues.
             #Principal, Deviatoric, Z = FeatureCreation(Tensor,Eigenvalues)
             Principal, Deviatoric, Z = FeatureCreation(Tensor,NoisyEigenvalues)
+            #dRtildeI = AngleCreation(Tensors,OrigN0,Frequencies)
             
             # Temp_data = np.zeros([17*len(Frequencies)])
             #NewData = np.concatenate((Eigenvalues[:, 0].real, Eigenvalues[:, 0].imag))
@@ -91,9 +99,28 @@ def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
             NewData = np.concatenate((NewData, Principal[:, 3], Principal[:, 4], Principal[:, 5]))
             NewData = np.concatenate((NewData, Deviatoric[:, 0], Deviatoric[:, 1], Deviatoric[:, 2], Deviatoric[:, 3]))
             NewData = np.concatenate((NewData, Z))
-
+            NewData = np.concatenate((NewData, NoisyAngle))
+            
+            # This only works for eigenvalues and invairants
+            #for j,Feature in enumerate(Features):
+            #    X_train[i,(len(Frequencies)*2*j)+1:(len(Frequencies)*2*(j+1))+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+            count=0
+            # Code updated since we are not always dealing with real and imaginary parts for
+            # Feature_Dic[Feature]=8,9 then we have only a real part.
             for j,Feature in enumerate(Features):
-                X_train[i,(len(Frequencies)*2*j)+1:(len(Frequencies)*2*(j+1))+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                if Feature_Dic[Feature] < 8:
+                    #Feature_Data[:,len(Frequencies)*2*i:len(Frequencies)*2*(i+1)] = Data[:,len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                    X_train[i,count+1:count+len(Frequencies)*2+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                    count+=len(Frequencies)*2
+                elif Feature_Dic[Feature]==8:
+                    X_train[i,count+1:count+len(Frequencies)+1]=NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature])+len(Frequencies)]
+                    count+=len(Frequencies)
+                elif Feature_Dic[Feature]==9:
+                    X_train[i,count+1:count+len(Frequencies)+1]=NewData[len(Frequencies)*2*(Feature_Dic[Feature]-1)+len(Frequencies):len(Frequencies)*2*(Feature_Dic[Feature]-1)+2*len(Frequencies)]
+                    count+=len(Frequencies)
+
+
+
     else:
         percentage, train_noise = Training_noise.split('%')
         percentage, train_noise = float(percentage)/100,float(train_noise)
@@ -114,7 +141,13 @@ def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
                 NoisyEigenvalues[:,1] = AGWNr(np.real(Eigenvalues[:,1]),Training_noise)+1j*AGWNr(np.imag(Eigenvalues[:,1]),Training_noise)
                 NoisyEigenvalues[:,2] = AGWNr(np.real(Eigenvalues[:,2]),Training_noise)+1j*AGWNr(np.imag(Eigenvalues[:,2]),Training_noise)
 
-                
+                Angle = np.zeros(len(Frequencies))
+                NoisyAngle=np.zeros(len(Frequencies))
+                if AngleFlag=="On":
+                    # Add noise also to the angles
+                    Angle[:] = Angles[int(X_train[i,0]),:]
+                    NoisyAngle = AGWNr(Angle,Training_noise)
+
                 # Tensor = Tensors[int(X_train[i,0]),:,:]
                 #Tensor[:,0] = AGWN(Tensor[:,0],train_noise)
                 #Tensor[:,4] = AGWN(Tensor[:,4],train_noise)
@@ -135,6 +168,8 @@ def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
                 # this has been updated to compute invariants from eigenvalues as noise has been added to eigenvalues.
                 #Principal, Deviatoric, Z = FeatureCreation(Tensor,Eigenvalues)
                 Principal, Deviatoric, Z = FeatureCreation(Tensor,NoisyEigenvalues)
+                #dRtildeI = AngleCreation(Tensors,OrigN0,Frequencies)
+
  
                 #NewData = np.concatenate((Eigenvalues[:, 0].real, Eigenvalues[:, 0].imag))
                 #NewData = np.concatenate((NewData, Eigenvalues[:, 1].real, Eigenvalues[:, 1].imag))
@@ -148,7 +183,27 @@ def Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic):
                 NewData = np.concatenate(
                     (NewData, Deviatoric[:, 0], Deviatoric[:, 1], Deviatoric[:, 2], Deviatoric[:, 3]))
                 NewData = np.concatenate((NewData, Z))
+                NewData = np.concatenate((NewData, NoisyAngle))
+                
 
+                #for j,Feature in enumerate(Features):
+                #    X_train[i,(len(Frequencies)*2*j)+1:(len(Frequencies)*2*(j+1))+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                # This only works for eigenvalues and invairants
+                #for j,Feature in enumerate(Features):
+                #    X_train[i,(len(Frequencies)*2*j)+1:(len(Frequencies)*2*(j+1))+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                count=0
+                # Code updated since we are not always dealing with real and imaginary parts for
+                # Feature_Dic[Feature]=8,9 then we have only a real part.
                 for j,Feature in enumerate(Features):
-                    X_train[i,(len(Frequencies)*2*j)+1:(len(Frequencies)*2*(j+1))+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                    if Feature_Dic[Feature] < 8:
+                        #Feature_Data[:,len(Frequencies)*2*i:len(Frequencies)*2*(i+1)] = Data[:,len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                        X_train[i,count+1:count+len(Frequencies)*2+1] = NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                        count+=len(Frequencies)*2
+                    elif Feature_Dic[Feature]==8:
+                        X_train[i,count+1:count+len(Frequencies)+1]=NewData[len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature])+len(Frequencies)]
+                        count+=len(Frequencies)
+                    elif Feature_Dic[Feature]==9:
+                        X_train[i,count+1:count+len(Frequencies)+1]=NewData[len(Frequencies)*2*(Feature_Dic[Feature]-1)+len(Frequencies):len(Frequencies)*2*(Feature_Dic[Feature]-1)+2*len(Frequencies)]
+                        count+=len(Frequencies)
+
     return X_train[:,1:]

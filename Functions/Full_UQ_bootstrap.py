@@ -7,7 +7,8 @@ import time
 from matplotlib.patches import Patch
 from scipy.stats import gaussian_kde
 
-def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names,Alpha,Beta):
+def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,\
+                      Y_test,PYCOL,reordered_names,Alpha,Beta,Load_External_Data):
 
 
     if k != 0:
@@ -262,7 +263,10 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             print(df)
             # Create a violin plot
             ax = sns.violinplot(data=df, x="Post_prob",y="Class",cut=0,scale="width")
-            ax.set(xlabel ='Posterior probability $p(C_k|$data)', ylabel = 'Classes $C_k$', title = 'Classification prediction using measured data for object='+reordered_names[int(round(Y_test[n]))])
+            if Load_External_Data == True:
+                ax.set(xlabel ='Posterior probability $p(C_k|$data)', ylabel = 'Classes $C_k$', title = 'Classification prediction using measured data for object='+reordered_names[int(round(Y_test[n]))])
+            else:
+                ax.set(xlabel ='Posterior probability $p(C_k|$data)', ylabel = 'Classes $C_k$', title = 'Classification prediction using simulated data for object='+reordered_names[int(round(Y_test[n]))])
             #plt.show()
             if type(Testing_noise) == bool:
                 #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf') #int(round(Y_test[n]))

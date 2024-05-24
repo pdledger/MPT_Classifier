@@ -26,8 +26,8 @@ def Simple_UQ_bootstrap(k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabilitie
         # We want to do +/- nstand standard deviations so
         uq[i] = nstand*np.sqrt(uq[i])
         for j in range(Number_Of_Classes):
-            pup[i,j] = probs[i,j] + uq[i]
-            plow[i,j] = probs[i,j] - uq[i]
+            pup[i,j] = np.min((probs[i,j] + uq[i],1))
+            plow[i,j] = np.max((probs[i,j] - uq[i],0))
             #print(pup[i,:],plow[i,:])
             #print(uq[i])
             #time.sleep(10)

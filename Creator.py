@@ -9,6 +9,9 @@
 
 # EDIT: 30/04/2024 - Paul Ledger
 # Converted to function with specified inputs to be run from an ipynb file
+
+# EDIT: 9/05/2024 - Paul Ledger
+# Added path to class directory (so that different dictionaries can be used)
 ########################################################################
 import numpy as np
 import os
@@ -24,6 +27,9 @@ sys.path.insert(0,"Functions")
 from Interpolater import *
 from Scaler import *
 from PreProcessors import *
+sys.path.insert(0,"AngleFunctions")
+from AngleCreation import *
+
 
 
 #def Creator(Name,Frequencies,Classes,extend_results,Num_Results,class_split,class_names,\
@@ -64,6 +70,8 @@ def Creator(Creator_Settings):
     Alpha_scale = Creator_Settings["Alpha_scale"]
 
     Sigma_scale = Creator_Settings["Sigma_scale"]
+
+    Class_dir = Creator_Settings["Class_dir"]
 
     #User Inputs
 
@@ -252,7 +260,7 @@ def Creator(Creator_Settings):
     #else:
     #    Frequencies = np.logspace(Frequencies[0],Frequencies[1],Frequencies[2])
     Descriptors = 6 #for filepath, class, object, alpha, mur, sigma
-    Fields = 17*len(Frequencies) #6 Eigenvalues, 6 Principal, 4 Deviatoric, 1 Comutator
+    Fields = 18*len(Frequencies) #6 Eigenvalues, 6 Principal, 4 Deviatoric, 1 Comutator, 1 angle measure 
     Num_Results -= 1
 
 
@@ -267,7 +275,8 @@ def Creator(Creator_Settings):
             else:
                 for sub_cl in cl:
                     class_dic[sub_cl] = i
-        for root, dirs, files in os.walk('Classes', topdown = True):
+        #for root, dirs, files in os.walk('Classes', topdown = True):
+        for root, dirs, files in os.walk(Class_dir, topdown = True):            
             for directory in dirs:
                 if 'Class_' in directory and directory[6:] in class_dic.keys():
                     for subroot,subdirs, subfiles in os.walk(root+'/'+directory,topdown = True):
@@ -308,7 +317,9 @@ def Creator(Creator_Settings):
 
     #Find the Classes
     if type(Classes) == list:
-        for root, dirs, files in os.walk('Classes', topdown = True):
+        print("Class type is a list")
+        #for root, dirs, files in os.walk('Classes', topdown = True):
+        for root, dirs, files in os.walk(Class_dir, topdown = True):
             for directory in dirs:
                 if 'Class_' in directory and directory[6:] in Classes:
                     #Find the Objects in the classes
@@ -316,8 +327,10 @@ def Creator(Creator_Settings):
                         for subdirectory in subdirs:
                             if 'OBJ_' in subdirectory:
                                 Filepath = subroot+'/'+subdirectory
-                                Class = subroot.replace('Classes/','').replace('Class_','')
+                                #Class = subroot.replace('Classes/','').replace('Class_','')
+                                Class = subroot.replace(Class_dir+"/",'').replace('Class_','')
                                 Object = subdirectory.replace('OBJ_','')
+                                print(Object)
                                 Folders = os.listdir(Filepath)
                                 Folders = [Folder for Folder in Folders if '.DS' not in Folder]
                                 for Folder in Folders:
@@ -365,7 +378,7 @@ def Creator(Creator_Settings):
                                                 Num_Results = scales_per_class[key]-1
 
                                     #Obtain and scale the primary result
-                                    OrigFreq, OrigEig, OrigTen, NewFreqs, NewEigs, NewTens, NewAls, NewSigs = Scale(Filepath,[Al],[Sig],Alpha_scale,Sigma_scale,int(Num_Results))
+                                    OrigFreq, OrigEig, OrigTen, OrigN0, NewFreqs, NewEigs, NewTens, NewAls, NewSigs, NewN0 = Scale(Filepath,[Al],[Sig],Alpha_scale,Sigma_scale,int(Num_Results))
 
                                     #Interpolate to the correct values
                                     Tensors, Eigenvalues = LogInterp(OrigFreq,OrigEig,OrigTen,Frequencies,True)
@@ -373,15 +386,18 @@ def Creator(Creator_Settings):
                                     ScaleEigs = np.zeros([len(Frequencies),3,int(Num_Results)],dtype=complex)
                                     for i in range(int(Num_Results)):
                                         ScaleTens[:,:,i], ScaleEigs[:,:,i] = LogInterp(NewFreqs[:,i],NewEigs[:,:,i],NewTens[:,:,i],Frequencies,True)
+                                        # We don't need to interpolate NewN0 since this is only for the lowest frequency
 
                                     #Create the features
                                     Principal, Deviatoric, Z = FeatureCreation(Tensors,Eigenvalues)
+                                    dRtildeI = AngleCreation(Tensors,OrigN0,Frequencies)
 
                                     #Add the features for the original sweep to the database
                                     if FirstInstance == True:
                                         NewData = np.zeros([Fields])
                                         DataSet = np.zeros([Fields])
                                         Scaled_Tensors = Tensors
+                                        Angles = dRtildeI
                                         NewData = np.concatenate((Eigenvalues[:,0].real, Eigenvalues[:,0].imag))
                                         NewData = np.concatenate((NewData, Eigenvalues[:, 1].real, Eigenvalues[:, 1].imag))
                                         NewData = np.concatenate((NewData, Eigenvalues[:, 2].real, Eigenvalues[:, 2].imag))
@@ -389,6 +405,7 @@ def Creator(Creator_Settings):
                                         NewData = np.concatenate((NewData, Principal[:, 3], Principal[:, 4], Principal[:, 5]))
                                         NewData = np.concatenate((NewData, Deviatoric[:, 0], Deviatoric[:, 1], Deviatoric[:, 2], Deviatoric[:, 3]))
                                         NewData = np.concatenate((NewData, Z))
+                                        NewData = np.concatenate((NewData, dRtildeI))
 
                                         DataSet[:] = NewData[:]
                                         FirstInstance = False
@@ -401,8 +418,12 @@ def Creator(Creator_Settings):
                                         NewData = np.concatenate((NewData, Principal[:, 3], Principal[:, 4], Principal[:, 5]))
                                         NewData = np.concatenate((NewData, Deviatoric[:, 0], Deviatoric[:, 1], Deviatoric[:, 2],Deviatoric[:, 3]))
                                         NewData = np.concatenate((NewData, Z))
+                                        NewData = np.concatenate((NewData, dRtildeI))
+
+                                        
                                         DataSet = np.vstack([DataSet,NewData])
                                         Scaled_Tensors = np.vstack([Scaled_Tensors,Tensors])
+                                        Angles = np.vstack([Angles,dRtildeI])
 
                                     #Add the descriptions for the secondary sweeps
                                     for j in range(int(Num_Results)):
@@ -411,6 +432,7 @@ def Creator(Creator_Settings):
                                     #Add the features for the secondary sweeps to the database
                                     for j in range(int(Num_Results)):
                                         Principal, Deviatoric, Z = FeatureCreation(ScaleTens[:,:,j],ScaleEigs[:,:,j])
+                                        dRtildeI = AngleCreation(ScaleTens[:,:,j],NewN0[:,:,j],Frequencies)
                                         NewData = np.concatenate((Eigenvalues[:, 0].real, Eigenvalues[:, 0].imag))
                                         NewData = np.concatenate((NewData, Eigenvalues[:, 1].real, Eigenvalues[:, 1].imag))
                                         NewData = np.concatenate((NewData, Eigenvalues[:, 2].real, Eigenvalues[:, 2].imag))
@@ -418,110 +440,119 @@ def Creator(Creator_Settings):
                                         NewData = np.concatenate((NewData, Principal[:, 3], Principal[:, 4], Principal[:, 5]))
                                         NewData = np.concatenate((NewData, Deviatoric[:, 0], Deviatoric[:, 1], Deviatoric[:, 2], Deviatoric[:, 3]))
                                         NewData = np.concatenate((NewData, Z))
+                                        NewData = np.concatenate((NewData, dRtildeI))
                                         DataSet = np.vstack([DataSet,NewData])
                                         Scaled_Tensors = np.vstack([Scaled_Tensors,ScaleTens[:,:,j]])
+                                        Angles = np.vstack([Angles,dRtildeI])
 
     else:
-        for root, dirs, files in os.walk('Classes',topdown = True):
-            for directory in dirs:
-                if 'OBJ_' in directory:
-                    Filepath = root+'/'+directory
-                    Class = root.replace('Classes/','').replace('Class_','')
-                    Object = directory.replace('OBJ_','')
-                    Folders = os.listdir(Filepath)
-                    Folders = [Folder for Folder in Folders if '.DS' not in Folder]
-
-                    #Work out how many secondary sweep to produce if required
-                    if extend_results in ['classwise','global_class']:
-                        for key in scales_per_class.keys():
-                            if key in root:
-                                Num_Results = scales_per_class[key]-1
-
-                    for Folder in Folders:
-                        #Obtain the Alpha, Mur and Sigma values
-                        if Folder[0] == '.':
-                            _,_,Al,_,Mur,_,Sig = Folder.split('_')
-                        else:
-                            _,Al,_,Mur,_,Sig = Folder.split('_')
-                        #Add to the instance descriptions
-                        if FirstInstance == True:
-                            Descriptions = np.array([Filepath,Class,Object+'_Orig',Al,Mur,Sig])
-                        else:
-                            Descriptions = np.vstack([Descriptions,np.array([Filepath,Class,Object+'_Orig',Al,Mur,Sig])])
-                        Sweeps = os.listdir(Filepath+'/'+Folder)
-                        Sweep = [Sweep for Sweep in Sweeps if '.DS' not in Sweep][0]
-
-                        #Obtain and scale the primary result
-                        OrigFreq, OrigEig, OrigTen, NewFreqs, NewEigs, NewTens, NewAls, NewSigs = Scale(Filepath,[Al],[Sig],Alpha_scale,Sigma_scale,Num_Results)
-
-                        #Interpolate to the correct values
-                        Tensors, Eigenvalues = LogInterp(OrigFreq,OrigEig,OrigTen,Frequencies,True)
-                        ScaleTens = np.zeros([len(Frequencies),9,Num_Results],dtype=complex)
-                        ScaleEigs = np.zeros([len(Frequencies),3,Num_Results],dtype=complex)
-                        for i in range(Num_Results):
-                            ScaleTens[:,:,i], ScaleEigs[:,:,i] = LogInterp(NewFreqs[:,i],NewEigs[:,:,i],NewTens[:,:,i],Frequencies,True)
-
-                        #Create the features
-                        Principal, Deviatoric, Z = FeatureCreation(Tensors,Eigenvalues)
-
-                        #Add the features for the original sweep to the database
-                        if FirstInstance == True:
-                            NewData = np.zeros([Fields])
-                            DataSet = np.zeros([Fields])
-                            Scaled_Tensors = Tensors
-                            for i in range(9):
-                                if i<3:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Eigenvalues[:,i].real
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Eigenvalues[:,i].imag
-                                elif i<6:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Principal[:,i-3]
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Principal[:,i-2]
-                                elif i<8:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Deviatoric[:,i-6]
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Deviatoric[:,i-5]
-                                else:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Z
-                            DataSet[:] = NewData[:]
-                            FirstInstance = False
-                        else:
-                            for i in range(9):
-                                if i<3:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Eigenvalues[:,i].real
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Eigenvalues[:,i].imag
-                                elif i<6:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Principal[:,i-3]
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Principal[:,i-2]
-                                elif i<8:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Deviatoric[:,i-6]
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Deviatoric[:,i-5]
-                                else:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Z
-                            DataSet = np.vstack([DataSet,NewData])
-                            Scaled_Tensors = np.vstack([Scaled_Tensors,Tensors])
-
-
-                        #Add the descriptions for the secondary sweeps
-                        for j in range(Num_Results):
-                            Descriptions = np.vstack([Descriptions,np.array([Filepath,Class,Object,NewAls[j],Mur,NewSigs[j]])])
-
-
-                        #Add the features for the secondary sweeps to the database
-                        for j in range(Num_Results):
-                            Principal, Deviatoric, Z = FeatureCreation(ScaleTens[:,:,j],ScaleEigs[:,:,j])
-                            for i in range(9):
-                                if i<3:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = ScaleEigs[:,i,j].real
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = ScaleEigs[:,i,j].imag
-                                elif i<6:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Principal[:,i-3]
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Principal[:,i-2]
-                                elif i<8:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Deviatoric[:,i-6]
-                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Deviatoric[:,i-5]
-                                else:
-                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Z
-                            DataSet = np.vstack([DataSet,NewData])
-                            Scaled_Tensors = np.vstack([Scaled_Tensors,ScaleTens[:,:,j]])
+        print("Classes is not a list, check how NewData is setup as it may not set the data in the correct way")
+        #for root, dirs, files in os.walk('Classes',topdown = True):
+##        for root, dirs, files in os.walk(Class_dir,topdown = True):
+##            for directory in dirs:
+##                if 'OBJ_' in directory:
+##                    Filepath = root+'/'+directory
+##                    #Class = root.replace('Classes/','').replace('Class_','')
+##                    Class = root.replace(Class_dir+"/",'').replace('Class_','')
+##                    Object = directory.replace('OBJ_','')
+##                    Folders = os.listdir(Filepath)
+##                    Folders = [Folder for Folder in Folders if '.DS' not in Folder]
+##
+##                    #Work out how many secondary sweep to produce if required
+##                    if extend_results in ['classwise','global_class']:
+##                        for key in scales_per_class.keys():
+##                            if key in root:
+##                                Num_Results = scales_per_class[key]-1
+##
+##                    for Folder in Folders:
+##                        #Obtain the Alpha, Mur and Sigma values
+##                        if Folder[0] == '.':
+##                            _,_,Al,_,Mur,_,Sig = Folder.split('_')
+##                        else:
+##                            _,Al,_,Mur,_,Sig = Folder.split('_')
+##                        #Add to the instance descriptions
+##                        if FirstInstance == True:
+##                            Descriptions = np.array([Filepath,Class,Object+'_Orig',Al,Mur,Sig])
+##                        else:
+##                            Descriptions = np.vstack([Descriptions,np.array([Filepath,Class,Object+'_Orig',Al,Mur,Sig])])
+##                        Sweeps = os.listdir(Filepath+'/'+Folder)
+##                        Sweep = [Sweep for Sweep in Sweeps if '.DS' not in Sweep][0]
+##
+##                        #Obtain and scale the primary result
+##                        OrigFreq, OrigEig, OrigTen, OrigN0, NewFreqs, NewEigs, NewTens, NewAls, NewSigs, NewN0 = Scale(Filepath,[Al],[Sig],Alpha_scale,Sigma_scale,Num_Results)
+##
+##                        #Interpolate to the correct values
+##                        Tensors, Eigenvalues = LogInterp(OrigFreq,OrigEig,OrigTen,Frequencies,True)
+##                        ScaleTens = np.zeros([len(Frequencies),9,Num_Results],dtype=complex)
+##                        ScaleEigs = np.zeros([len(Frequencies),3,Num_Results],dtype=complex)
+##                        for i in range(Num_Results):
+##                            ScaleTens[:,:,i], ScaleEigs[:,:,i] = LogInterp(NewFreqs[:,i],NewEigs[:,:,i],NewTens[:,:,i],Frequencies,True)
+##                            # We don't need to interpolate NewN0 since this is only for the lowest frequency
+##
+##                        #Create the features
+##                        Principal, Deviatoric, Z = FeatureCreation(Tensors,Eigenvalues)
+##                        dRtildeI = AngleCreation(Tensors,N0,Frequencies)
+##                        
+##
+##                        #Add the features for the original sweep to the database
+##                        # Why is this part of the code in a different format to the block above?
+##                        if FirstInstance == True:
+##                            NewData = np.zeros([Fields])
+##                            DataSet = np.zeros([Fields])
+##                            Scaled_Tensors = Tensors
+##                            for i in range(9):
+##                                if i<3:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Eigenvalues[:,i].real
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Eigenvalues[:,i].imag
+##                                elif i<6:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Principal[:,i-3]
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Principal[:,i-2]
+##                                elif i<8:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Deviatoric[:,i-6]
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Deviatoric[:,i-5]
+##                                else:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Z
+##                            DataSet[:] = NewData[:]
+##                            FirstInstance = False
+##                        else:
+##                            for i in range(9):
+##                                if i<3:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Eigenvalues[:,i].real
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Eigenvalues[:,i].imag
+##                                elif i<6:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Principal[:,i-3]
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Principal[:,i-2]
+##                                elif i<8:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Deviatoric[:,i-6]
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Deviatoric[:,i-5]
+##                                else:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Z
+##                            DataSet = np.vstack([DataSet,NewData])
+##                            Scaled_Tensors = np.vstack([Scaled_Tensors,Tensors])
+##
+##
+##                        #Add the descriptions for the secondary sweeps
+##                        for j in range(Num_Results):
+##                            Descriptions = np.vstack([Descriptions,np.array([Filepath,Class,Object,NewAls[j],Mur,NewSigs[j]])])
+##
+##
+##                        #Add the features for the secondary sweeps to the database
+##                        for j in range(Num_Results):
+##                            Principal, Deviatoric, Z = FeatureCreation(ScaleTens[:,:,j],ScaleEigs[:,:,j])
+##                            for i in range(9):
+##                                if i<3:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = ScaleEigs[:,i,j].real
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = ScaleEigs[:,i,j].imag
+##                                elif i<6:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Principal[:,i-3]
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Principal[:,i-2]
+##                                elif i<8:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Deviatoric[:,i-6]
+##                                    NewData[len(Frequencies)*((i*2)+1):len(Frequencies)*((i*2)+2)] = Deviatoric[:,i-5]
+##                                else:
+##                                    NewData[len(Frequencies)*(i*2):len(Frequencies)*((i*2)+1)] = Z
+##                            DataSet = np.vstack([DataSet,NewData])
+##                            Scaled_Tensors = np.vstack([Scaled_Tensors,ScaleTens[:,:,j]])
 
 
     #Save the data
@@ -539,6 +570,10 @@ def Creator(Creator_Settings):
     Scaled_Tensors = Scaled_Tensors.reshape(int(np.shape(Scaled_Tensors)[0]/len(Frequencies)),len(Frequencies),9)
     with open('DataSets/'+Name+'/Tensors.npy', 'wb') as f:
         np.save(f, Scaled_Tensors)
+    with open('DataSets/'+Name+'/Angles.npy', 'wb') as f:
+        np.save(f, Angles)
+    print(np.shape(Angles),len(Frequencies))
+        
 
     #Create a file with the frequencies sampled at
     np.savetxt('DataSets/'+Name+'/Frequencies.csv',Frequencies,delimiter = ',')

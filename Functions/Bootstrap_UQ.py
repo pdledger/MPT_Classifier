@@ -35,7 +35,8 @@ def Bootstrap_UQ(Number_Of_Classes,UQPL,ActualPL,ProbabilitiesPL,ProbabilitiesUp
             # If the ith class considered is the same as the true class of the jth output
             if i == int(ActualPL[j]):
                 if count == 0:
-                    temp_probs = ProbabilitiesPL[j,:]
+                    temp_probs =np.zeros((1,len(ProbabilitiesPL[j,:])))
+                    temp_probs[0,:] = ProbabilitiesPL[j,:]
                     UQh = UQPL[j]
                     count = count + 1
                 else:

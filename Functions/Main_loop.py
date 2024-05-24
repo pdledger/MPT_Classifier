@@ -48,11 +48,13 @@ from Full_UQ_bootstrap import *
 from Jensen_Shannon import *
 
 from Plot_comparison_features import *
+from Plot_principal_features import *
 
 from ApplySVD import *
 
 def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,
-              PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features,Trainer_Settings):
+              PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features,
+              Trainer_Settings,Plot_Principal_Componenets):
 
     #where to save the data
     if Features==['Pri1','Pri2','Pri3']:
@@ -71,6 +73,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
 
         #Read in the data
         Data = np.load('DataSets/'+DataSet_Name+'/DataSet.npy')
+        print(np.shape(Data))
         Frequencies = np.genfromtxt('DataSets/'+DataSet_Name+'/Frequencies.csv',delimiter=',')
         Labels = np.genfromtxt('DataSets/'+DataSet_Name+'/Labels.csv',delimiter=',')
         Names = np.genfromtxt('DataSets/'+DataSet_Name+'/names.csv',delimiter=',',dtype=str)
@@ -87,10 +90,23 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
         DataSet = np.load('DataSets/'+DataSet_Name+'/Descriptions.npy')
         Tensors = np.load('DataSets/'+DataSet_Name+'/Tensors.npy')
 
+        # Check if the list of Features contains angles
+        # Only read the angle data if we are going to use this feature.
+        AngleFlag = "Off"
+        for Feat in Features:
+            if Feat == 'AngleRtildeI':
+                AngleFlag = "On"
+        if AngleFlag== "On":
+            Angles = np.load('DataSets/'+DataSet_Name+'/Angles.npy')
+        else:
+            Angles=[]
+            
+            
 
         Object_names = []
         Coin_Labels = []
         for name in Names:
+            #print(name)
             if name not in Coin_Labels:
                 Coin_Labels.append(name)
                 Object_names.append(name)
@@ -101,26 +117,42 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
         #Create the desired features
         Feature_Size = 0
         for Feat in Features:
-            if Feat == 'Com':
-                Feature_Size += 1
+            if Feat == 'Com' or Feat == 'AngleRtildeI':
+                Feature_Size += 1 # These features are real valued only
             else:
-                Feature_Size += 2
+                Feature_Size += 2 # Other features are complex and so we need to consider real and imaginary parts
         Feature_Data = np.zeros([np.shape(Data)[0],Feature_Size*len(Frequencies)])
         #Create a dictionary for Feature selection
-        Feature_Dic = {'Eig1' : 0, 'Eig2' : 1, 'Eig3' : 2, 'Pri1' : 3, 'Pri2' : 4, 'Pri3' : 5, 'Dev2' : 6, 'Dev3' : 7, 'Com' : 8}
+        Feature_Dic = {'Eig1' : 0, 'Eig2' : 1, 'Eig3' : 2, 'Pri1' : 3, 'Pri2' : 4, 'Pri3' : 5, 'Dev2' : 6, 'Dev3' : 7, 'Com' : 8, 'AngleRtildeI': 9}
 
         #Create the Features and Labels to be used
+        count=0
+        # Code updated since we are not always dealing with real and imaginary parts for
+        # Feature_Dic[Feature]=8,9 then we have only a real part.
         for i,Feature in enumerate(Features):
-            Feature_Data[:,len(Frequencies)*2*i:len(Frequencies)*2*(i+1)] = Data[:,len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+            #print(Feature,Feature_Dic[Feature],len(Frequencies)*2*Feature_Dic[Feature],len(Frequencies)*2*(Feature_Dic[Feature]+1))
+            if Feature_Dic[Feature] < 8:
+        #    Feature_Data[:,len(Frequencies)*2*i:len(Frequencies)*2*(i+1)] = Data[:,len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                Feature_Data[:,count:count+len(Frequencies)*2] = Data[:,len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature]+1)]
+                count+=len(Frequencies)*2
+            elif Feature_Dic[Feature]==8:
+                Feature_Data[:,count:count+len(Frequencies)]=Data[:,len(Frequencies)*2*Feature_Dic[Feature]:len(Frequencies)*2*(Feature_Dic[Feature])+len(Frequencies)]
+                count+=len(Frequencies)
+            elif Feature_Dic[Feature]==9:
+                Feature_Data[:,count:count+len(Frequencies)]=Data[:,len(Frequencies)*2*(Feature_Dic[Feature]-1)+len(Frequencies):len(Frequencies)*2*(Feature_Dic[Feature]-1)+2*len(Frequencies)]
+                count+=len(Frequencies)
+        
+                
         Labels = np.array([float(Labels[i]) for i in range(len(Labels))])
 
-
-        print(Feature_Data[:,len(Frequencies)])
+        #print(np.shape(Feature_Data))
+        #print(Feature_Data[:,len(Frequencies)])
 
 
         #Create a way to keep track of the data
         Input_Array = np.zeros([len(Labels),Feature_Size*len(Frequencies)+2])
         print(np.shape(Input_Array),np.shape(Feature_Data))
+        print("Data",Data)
         Input_Array[:,0] = np.arange(len(Labels))
         Input_Array[:,1:-1] = Feature_Data
         Input_Array[:,-1] = Labels
@@ -188,7 +220,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                 X_train = X_train[:,1:]
             else:
                 print('to here')
-                X_train = Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic)
+                X_train = Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic,Angles,AngleFlag)
             
 
 
@@ -197,7 +229,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
             if type(Testing_noise)==bool:
                 X_test = X_test[:,1:]
             else:
-                X_test = Add_Noise(X_test,Testing_noise,Tensors,Features,Frequencies,Feature_Dic)
+                X_test = Add_Noise(X_test,Testing_noise,Tensors,Features,Frequencies,Feature_Dic,Angles,AngleFlag)
 
             for ii, Model in enumerate(Models_to_run):
                 print(Model)
@@ -308,12 +340,14 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                        
 
                         # Plotting comparison figures. Currently this is only supported for one test class.
-
+                        if (k==0) & (Plot_Principal_Componenets is True) & (Reduce_Features is True) :
+                            # Make a plot of first two principal components 
+                            Plot_principal_features(Frequencies,X_train_norm,X_test_norm,Y_train,DataSet_Name,Model,Savename,Testing_noise,reordered_names)
                             
                         #if (k == 1) & (Plot_Comparison_Figures is True) & (Load_External_Data is True) :#& (X_test_norm.ndim == 1):
-                        if (k == 0) & (Plot_Comparison_Figures is True) & (Load_External_Data is True) & (Reduce_Features is False):
+                        if (k == 0) & (Plot_Comparison_Figures is True) & (Reduce_Features is False):
                             # This will only work without SVD being applied
-                            Plot_comparison_features(Frequencies,X_train,X_test,Y_train,DataSet_Name,Model,Savename,Testing_noise)
+                            Plot_comparison_features(Frequencies,X_train,X_test,Y_train,DataSet_Name,Model,Savename,Testing_noise,Features,Load_External_Data,reordered_names)
 
                         if Plot_Comparison_Figures is False:
 
@@ -350,7 +384,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                                 ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL = Simple_UQ_bootstrap(k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL)
                             if (Model in Bayesian_Classifiers): #or ('MLP' in Model):
                                 # included output of snapshots for testing
-                               ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL,df = Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names,Alpha,Beta)
+                               ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL,df = Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,X_test_norm,ProbabilitiesPL,DataSet_Name,Model,Savename,Testing_noise,Y_test,PYCOL,reordered_names,Alpha,Beta,Load_External_Data)
                                Vary_alpha_beta.append(df)
 
                     if Plot_Comparison_Figures is False:

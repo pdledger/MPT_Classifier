@@ -73,12 +73,22 @@ def main(Trainer_Settings):
     Bootstrap_Repetitions = Trainer_Settings["Bootstrap_Repetitions"]
 
     SNR_array = Trainer_Settings["SNR_array"]
+
+    Plot_Principal_Componenets = Trainer_Settings["Plot_Principal_Componenets"]
     
 #def main(DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Reduce_Features,Models_to_run,Features,Bootstrap_Repetitions,SNR_array=[]):
     if SNR_array != []:
         overwrite_noise_level = True
     else:
         overwrite_noise_level = False
+
+
+    plt.rc('axes', titlesize=8)        # Controls Axes Title
+    plt.rc('axes', labelsize=8)        # Controls Axes Labels
+    plt.rc('xtick', labelsize=8)       # Controls x Tick Labels
+    plt.rc('ytick', labelsize=8)       # Controls y Tick Labels
+    plt.rc('legend', fontsize=8, title_fontsize=8)       # Controls Legend Font
+    plt.rc('figure', titlesize=8)      # Controls Figure Title
 
 
 ##    #User Inputs
@@ -165,11 +175,13 @@ def main(Trainer_Settings):
     Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,
               Full_Save,Models_to_run,Features,Bootstrap_Repetitions,PYCOL,
               Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,
-              Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features,Trainer_Settings)
+              Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features,Trainer_Settings,
+              Plot_Principal_Componenets)
 
 
 
-
+    # Force exit of threads if not properly killed already
+    os._exit(1)
 
 
 
