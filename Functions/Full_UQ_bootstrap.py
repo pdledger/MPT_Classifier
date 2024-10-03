@@ -1,5 +1,5 @@
 import numpy as np
-import statistics 
+import statistics
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -16,7 +16,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
         disp("but Bayesian classification is selected - so only a single")
         disp("bootstrap iteration is expected")
         exit()
-        
+
     # Also compute uq based nstand standard deviations
     nstand =  2
 
@@ -38,7 +38,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
     pmean = np.zeros((N,Number_Of_Classes))
 
     flagged = np.zeros(Number_Of_Classes)
-                                    
+
     # Keep a record of first distribution (only) set 100 samples from the posterior
     nsamp=100
     postdist = np.zeros((Number_Of_Classes,nsamp))
@@ -57,7 +57,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
         for myk in range(Number_Of_Classes):
             kclass = myk*np.ones(1).astype('float32')
             x = np.zeros((1,D),dtype='float32')
-            x[0,:] = X_test_norm[n,:].astype('float32') 
+            x[0,:] = X_test_norm[n,:].astype('float32')
             #print(np.shape(x),np.shape(kclass))
             if  flagged[int(round(Y_test[n]))]== 0:
 
@@ -69,7 +69,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                 mean = statistics.mean((probk[0,:]).tolist()) # don't store as we have the MAP estimate in  probs?
                 std = statistics.stdev((probk[0,:]).tolist())
                 pmean[n,myk] = mean
-      
+
                 # This would construct a 95 % confidence interval
                 #uq[n,myk]= 1.96*std/np.sqrt(nsamp)
                 #pup[n,myk] =  np.minimum(mean + 1.96*std/np.sqrt(nsamp), 1.0)
@@ -97,26 +97,26 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                 probk = model.prob(x,kclass,distribution=False)
                 pmean[n,myk] = probk[0]
                 postdist[myk,:] = probk[0]
-        
-               
-            
+
+
+
             #if n == 0:
                 # As an example store the posterioir probabilities distributions of the first item
-            
+
         if  flagged[int(round(Y_test[n]))]== 0:
             count=count+1
             # Keep a record and only output posterior distribution once for each class - just to show examples
             flagged[int(round(Y_test[n]))]=1
-                        
+
             #df2 = pd.DataFrame(np.transpose(postdist),columns=cols)
             df2 = pd.DataFrame(np.transpose(postdist),columns=reordered_names)
-            
+
             fig=sns.histplot(df2,multiple="layer",bins=nsamp,stat="count")
             plt.xlim(0,1)
 
             plt.xlabel("Posterior P(C_k=Class| x )")
 
-            
+
             if type(Testing_noise) == bool:
                 #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/posthistdistribution'+str(count)+'.pdf')
                 plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/posthistdistribution'+str(int(round(Y_test[n])))+'.pdf')
@@ -129,7 +129,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 
 ##            fig, ax = plt.subplots()
 ##            for myk in range(Number_Of_Classes):
-##                sns.kdeplot(postdist[myk,:].cumsum(), 
+##                sns.kdeplot(postdist[myk,:].cumsum(),
 ##                             bw_adjust=0.5,multiple="layer",common_grid=True,clip=(0,1),ax=ax,label="Class"+str(myk))
 ##            ax.legend()
 ##            plt.tight_layout()
@@ -152,10 +152,10 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             try:
                 for myk in range(Number_Of_Classes):
                     density = gaussian_kde(postdist[myk,:],bw_method="silverman")
-                
+
                     x_vals = np.linspace(-1,2,200) # Specifying the limits of our data
                     density.covariance_factor = lambda : 0.1 #Smoothing parameter
-     
+
                     density._compute_covariance()
                     plt.plot(x_vals,density(x_vals),label="Class"+str(myk))
 
@@ -168,7 +168,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
                 plt.xlim(0,1)
                 #plt.show()
                 if type(Testing_noise) == bool:
-                    #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/postkdedistribution'+str(count)+'.pdf') 
+                    #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/postkdedistribution'+str(count)+'.pdf')
                     plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/postkdedistribution'+str(int(round(Y_test[n])))+'.pdf')
                 else:
                     #plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/poskdedistribution'+str(count)+'.pdf')
@@ -179,7 +179,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 ##            print("Completed posterior plots")
 
 
-                       
+
             # Plot out bar graphs showing output for the uq value associated with this output using 95 % CI
             labels = ['Probability','95% Credible Interval']
             fig, ax = plt.subplots()
@@ -246,7 +246,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             Pdfdata = np.zeros(nsamp*Number_Of_Classes)
             sample=0
             for myk in range(Number_Of_Classes):
-                for mysample in range(nsamp):    
+                for mysample in range(nsamp):
                     Pdfclass.append(reordered_names[myk])
                     # Add a small perturbation to avoid problems with seaborn plotting if all values are the same.
                     Pdfdata[sample]=(postdist[myk,mysample])
@@ -268,6 +268,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             else:
                 ax.set(xlabel ='Posterior probability $p(C_k|$data)', ylabel = 'Classes $C_k$', title = 'Classification prediction using simulated data for object='+reordered_names[int(round(Y_test[n]))])
             #plt.show()
+            ax.set_xlim(0,1)
             if type(Testing_noise) == bool:
                 #plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/credint90snapshotfigure'+str(count)+'.pdf') #int(round(Y_test[n]))
                 plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/violinplot'+str(int(round(Y_test[n])))+'.pdf')
@@ -277,7 +278,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
             plt.close()
             df_all_classes.append(df)
 
-     
+
 
 ##            # Plot out bar graphs showing output for the uq value associated with this output
 ##            xb = np.arange(Number_Of_Classes)
@@ -298,9 +299,9 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 ##                    #ax.bar_label(rects, padding=3)
 ##                    mult += 1
 
-                
+
             #Bars = ax.bar(np.arange(Number_Of_Classes), pmean[n,:],color=[PYCOL[3] if np.argmax(pmean[n,:])==j else PYCOL[0] for j in range(Number_Of_Classes)], align='center', alpha=0.5, ecolor='black', capsize=10,label='Probability')
-        
+
 ##            Bars1 = ax.bar(np.arange(Number_Of_Classes)-0.1, pmean[n,:],color=PYCOL[0], width=0.2, ecolor='black', capsize=10,label='Mean posterior probability $p(C_k|$data)')
 ##            Bars2 = ax.bar(np.arange(Number_Of_Classes), plow[n,:],color=PYCOL[1], align='center', alpha=0.5, ecolor='black', capsize=10,label='Mean Posterior probability $(p(C_k|$data)) - 2* Std. Dev.')
 ##            Bars3 = ax.bar(np.arange(Number_Of_Classes)+0.1, pup[n,:],color=PYCOL[2], align='center', alpha=0.5, ecolor='black', capsize=10,label='Mean Posterior probability $(p(C_k|$data)) - 2* Std. Dev.')
@@ -331,7 +332,7 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 
 
 
-            
+
 ##            fig2=sns.kdeplot(df2,multiple="layer")
 ##            plt.xlabel('P(C_k=Class| x )')
 ##            if type(Testing_noise) == bool:
@@ -342,16 +343,16 @@ def Full_UQ_bootstrap(model,k,probs,Number_Of_Classes,ProbabilitiesUpPL,Probabil
 ##            print("Completed posterior plots")
 ##            del fig2
 
-    
+
     print("Completed sampling")
     if k ==0:
         ProbabilitiesUpPL = pup
         ProbabilitiesLowPL = plow
         UQPL = uq
         ProbabilitiesPL = pmean
- 
 
-                   
+
+
 
 
     return ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,ProbabilitiesPL,df_all_classes
@@ -368,4 +369,3 @@ def checkvarience(postdist,Number_Of_Classes):
             postdist[myk,:] = np.fmax(0.*np.ones(shape=(1,Nsamp)),np.fmin(1.*np.ones(shape=(1,Nsamp)),np.random.normal(mu,np.sqrt(Tol),(1,Nsamp))))
             #print(mu,var,postdist[myk,:])
     return postdist
-        

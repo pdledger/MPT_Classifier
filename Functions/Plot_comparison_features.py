@@ -5,10 +5,16 @@ import pandas as pd
 import seaborn as sns
 import time
 
+from matplotlib import rc
+
+
 def Plot_comparison_features(Frequencies,X_train_norm,X_test_norm,Y_train,DataSet_Name,Model,Savename,Testing_noise,\
                              Features,Load_External_Data,reordered_names):
 
-    if Features==['Pri1','Pri2','Pri3']:    
+
+
+    #sns.set(font_scale=1)
+    if Features==['Pri1','Pri2','Pri3']:
         feature1_real = X_train_norm[:, 0:len(Frequencies)]
         feature1_imag = X_train_norm[:, len(Frequencies):2 * len(Frequencies)]
 
@@ -70,7 +76,7 @@ def Plot_comparison_features(Frequencies,X_train_norm,X_test_norm,Y_train,DataSe
             feature1_real = X_test_norm[:, 0:len(Frequencies)]
             feature1_imag = X_test_norm[:, len(Frequencies):2 * len(Frequencies)]
 
-            
+
             feature2_real = X_test_norm[:, 2 * len(Frequencies):3 * len(Frequencies)]
             feature2_imag = X_test_norm[:, 3 * len(Frequencies):4 * len(Frequencies)]
 
@@ -177,6 +183,7 @@ def Plot_comparison_features(Frequencies,X_train_norm,X_test_norm,Y_train,DataSe
         total_lineplot = sns.lineplot(data=internal_dataframe, x='omega',
                                          y='d_R(Rtilde,I)', hue='Class Names', palette=palette,hue_order=reordered_names )
         total_lineplot.set(xscale='log')
+        total_lineplot.set(xlabel=r"$\omega$ [rad/s]", ylabel=r"$\theta(d_R(\tilde{\cal R},{\cal I}))$ [rad]")
         plt.ylim(0,0.12)
         if type(Testing_noise) == bool:
             plt.savefig('Results/'+DataSet_Name+'/Noiseless/'+Model+'/'+Savename+'/d_R(Rtilde,I).pdf')
@@ -184,6 +191,6 @@ def Plot_comparison_features(Frequencies,X_train_norm,X_test_norm,Y_train,DataSe
             plt.savefig('Results/'+DataSet_Name+'/Noise_'+str(Testing_noise)+'/'+Model+'/'+Savename+'/d_R(Rtilde,I).pdf')
         plt.close()
 
-        
+
 
         #plt.show()

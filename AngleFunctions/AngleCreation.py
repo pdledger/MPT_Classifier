@@ -25,11 +25,11 @@ from Commeasure import *
 #   directory = Directory in which Tensors.csv, N0.csv and Frequencies.csv are stored
 #   MaxOmega = Maximum frequency to be considered
 def AngleCreation(TensorArray,N0,Frequencies,Figures="Off",FullRom="Rom"):
-   
+
     N=len(Frequencies)
     # N0 is generated from scaling and possible interpolation. Force symmetry
     N0 = (N0 + np.transpose(N0))/2.
-   
+
     Rstore,Istore,Rtildestore, N0store = SplitTensor(TensorArray,Frequencies,N0)
 
     # Determine eigenvalue decompositions of N0, R, I, Rtilde (no sorting applied), and their multiplicities
@@ -49,6 +49,7 @@ def AngleCreation(TensorArray,N0,Frequencies,Figures="Off",FullRom="Rom"):
     SortedMultIstore=[]
 
     if RImeasure == True:
+
         # Sort eigenvalues (and eigenvectors) so that || Lambda_R - Lambda_I || is maximal
         sorteigenvalues="MaxDifference"
         SortedMultRstore, SortedMultIstore, SortedURstore, SortedUIstore, SortedQRstore, SortedQIstore, SortedKstore = SortEigenValues(MultRstore, MultIstore, URstore, UIstore, QRstore, QIstore, Frequencies, sorteigenvalues, Rstore, Istore)
@@ -90,6 +91,11 @@ def AngleCreation(TensorArray,N0,Frequencies,Figures="Off",FullRom="Rom"):
 
 
     if RtildeImeasure==True:
+
+        # Determine the maximal and minimal angles from QRtilde and QI also output d_F metric for these orderings
+        #MinAnglestoreRtildeI, MaxAnglestoreRtildeI, dFMinAnglestoreRtildeI, dFMaxAnglestoreRtildeI,SortedURtildestore, SortedUIstore, SortedQRtildestore, SortedQIstore, SortedKstore= MinMaxthetafromQRQI(Frequencies,QRtildestore,QIstore,URtildestore, UIstore,MultRtildestore,MultIstore,FixEvecs)
+
+
         # Sort eigenvalues (and eigenvectors) so that || Lambda_Rtilde - Lambda_I || is maximal
         sorteigenvalues="MaxDifference"
         SortedMultRtildestore, SortedMultIstore, SortedURtildestore, SortedUIstore, SortedQRtildestore, SortedQIstore, SortedKstore = SortEigenValues(MultRtildestore, MultIstore, URtildestore, UIstore, QRtildestore, QIstore, Frequencies, sorteigenvalues, Rtildestore, Istore)
@@ -124,7 +130,8 @@ def AngleCreation(TensorArray,N0,Frequencies,Figures="Off",FullRom="Rom"):
 
         thetaRtildeIdE=np.fmin(AnglestoreRtildeIfmeasapprxconstsortedmaxdiff_min,AnglestoreRtildeIfmeasapprxconstsortedmindiff_min)
         thetaRtildeIdC=np.fmin(AnglestoreRtildeIcommeasapprxconstsortedmaxdiff_min,AnglestoreRtildeIcommeasapprxconstsortedmindiff_min)
-        RtildeIResults={"Frequencies": Frequencies,"thetaRtildeIdE":thetaRtildeIdE,"thetaRtildeIdC":thetaRtildeIdC}
+        RtildeIResults={"Frequencies": Frequencies,"thetaRtildeIdE":thetaRtildeIdE,"thetaRtildeIdC":thetaRtildeIdC}#,\
+                        #"thetaRtildeIdF":dFMinAnglestoreRtildeI,"thetaRtildeIdR":MinAnglestoreRtildeI}
     else:
         RtildeIResults=[]
 
@@ -265,3 +272,4 @@ def AngleCreation(TensorArray,N0,Frequencies,Figures="Off",FullRom="Rom"):
 
     #return RIResults,RtildeIResults,N0IResults,N0RResults,N0RtildeResults
     return RtildeIResults["thetaRtildeIdE"]
+    #return RtildeIResults["thetaRtildeIdF"]
