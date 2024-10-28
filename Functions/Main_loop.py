@@ -52,6 +52,8 @@ from Plot_principal_features import *
 
 from ApplySVD import *
 
+from Check_KL_divergence import *
+
 def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figures,Full_Save,Models_to_run,Features,Bootstrap_Repetitions,
               PYCOL,Probabalistic_Classifiers,Bayesian_Classifiers,Scikit_Classifiers,Tenflow_Classifiers,Probflow_Classifiers,Reduce_Features,
               Trainer_Settings,Plot_Principal_Componenets):
@@ -100,8 +102,8 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
             Angles = np.load('DataSets/'+DataSet_Name+'/Angles.npy')
         else:
             Angles=[]
-            
-            
+
+
 
         Object_names = []
         Coin_Labels = []
@@ -141,8 +143,8 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
             elif Feature_Dic[Feature]==9:
                 Feature_Data[:,count:count+len(Frequencies)]=Data[:,len(Frequencies)*2*(Feature_Dic[Feature]-1)+len(Frequencies):len(Frequencies)*2*(Feature_Dic[Feature]-1)+2*len(Frequencies)]
                 count+=len(Frequencies)
-        
-                
+
+
         Labels = np.array([float(Labels[i]) for i in range(len(Labels))])
 
         #print(np.shape(Feature_Data))
@@ -213,7 +215,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
             # Y_train and Y_test come from sampling (same) rows of Input_Array[:,-1] and so contain the labels.
 
 
-            
+
             #Add the noise to the training data
             # Note that this removes the first column of X_train
             if type(Training_noise)==bool:
@@ -221,11 +223,11 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
             else:
                 print('to here')
                 X_train = Add_Noise(X_train,Training_noise,Tensors,Features,Frequencies,Feature_Dic,Angles,AngleFlag)
-            
+
 
 
             #Add the noise to the testing data
-            # Note that this removes the first column of X_test                
+            # Note that this removes the first column of X_test
             if type(Testing_noise)==bool:
                 X_test = X_test[:,1:]
             else:
@@ -285,7 +287,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                                         Input_Array, delimiter=',')
                             except:
                                 pass
-    
+
 
                         #Train the model
 
@@ -331,19 +333,27 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
 
                         # Give an option to create a reduced number of features by applying SVD
                         if Reduce_Features == True:
+                            # Subtract means before SVD
+                            X_train = X_train- X_Means
+                            X_test = X_test - X_Means
+
                             X_train_norm, X_test_norm = ApplySVD (X_test,X_train, Testing_noise,DataSet_Name,Model,Savename )
 
                         else:
                             X_train_norm = (X_train-X_Means)/X_SD
                             X_test_norm = (X_test-X_Means)/X_SD
 
-                       
+
+
+                        # Use KL-divergence
+                        #Check_KL_divergence(X_train_norm,Y_train)
+
 
                         # Plotting comparison figures. Currently this is only supported for one test class.
                         if (k==0) & (Plot_Principal_Componenets is True) & (Reduce_Features is True) :
-                            # Make a plot of first two principal components 
+                            # Make a plot of first two principal components
                             Plot_principal_features(Frequencies,X_train_norm,X_test_norm,Y_train,DataSet_Name,Model,Savename,Testing_noise,reordered_names)
-                            
+
                         #if (k == 1) & (Plot_Comparison_Figures is True) & (Load_External_Data is True) :#& (X_test_norm.ndim == 1):
                         if (k == 0) & (Plot_Comparison_Figures is True) & (Reduce_Features is False):
                             # This will only work without SVD being applied
@@ -360,8 +370,8 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                                 model = Train_Probflow(Model,X_train_norm,Y_train,Number_Of_Classes,Alpha,Beta)
                             else:
                                 print("Classifier not found")
-                                
-                                
+
+
                             # save the model to disk
                             if Full_Save is True:
                                 try:
@@ -378,8 +388,8 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                             elif Model in Tenflow_Classifiers:
                                 Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Tenflow_results(k,model,probability_model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model)
                             elif Model in Probflow_Classifiers:
-                                Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Probflow_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model,Number_Of_Classes)    
-                
+                                Results,Con_mat_store,Predictions,Actual,PredictionsPL,ActualPL,Probabilities,ProbabilitiesPL,probs = Probflow_results(k,model,X_test_norm,Y_test,Load_External_Data,Predictions,Actual,PredictionsPL,ActualPL,Probabalistic_Classifiers,Probabilities,ProbabilitiesPL,Results,Con_mat_store,Model,Number_Of_Classes)
+
                             if (Model in Probabalistic_Classifiers): #or ('MLP' in Model):
                                 ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL = Simple_UQ_bootstrap(k,probs,Number_Of_Classes,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL)
                             if (Model in Bayesian_Classifiers): #or ('MLP' in Model):
@@ -426,7 +436,7 @@ def Main_loop(Noise_Levels,DataSet_Name,Load_External_Data,Plot_Comparison_Figur
                                # In this case ProbabilitiesUpPL, ProbabilitiesLowPL are prob estimate +/- UQPL - only contains value for single bootstap iteration
                                 Output_snapshot(model,ProbabilitiesPL,ProbabilitiesUpPL,ProbabilitiesLowPL,UQPL,Y_test,Number_Of_Classes,PYCOL,reordered_names,DataSet_Name,Testing_noise,Model,Savename)
                                 print("Completed snapshot classification")
-                                        
+
 
                 # Create plots of Kolmogorov-Smirnov tests to compare results for different alpha,beta
                 if (Model in Probflow_Classifiers) and (Plot_Comparison_Figures is False):
